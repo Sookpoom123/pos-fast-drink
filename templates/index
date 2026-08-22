@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🧋 Drink Order</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#F4EFEA;font-family:Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body{padding:10px;padding-bottom:105px}
+button,input,label{touch-action:manipulation}
+.menu-card{background:#fff;border-radius:14px;border:1.5px solid #C8B2A2;overflow:hidden}
+.menu-image{width:100%;height:110px;object-fit:contain;background:#fafafa;border-radius:10px}
+.topping-box{border:1px solid #ddd;border-radius:9px;background:#fafafa;overflow:hidden}
+.topping-item{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #eee;cursor:pointer}
+.topping-item:last-child{border-bottom:0}
+.topping-checkbox{width:20px;height:20px;flex-shrink:0}
+.order-button{min-height:42px}
+.language-button{min-width:62px;min-height:40px}
+.selected-count{font-size:11px;color:#92400e;font-weight:bold}
+.loading{text-align:center;padding:40px 10px;color:#777}
+@media (min-width:768px){
+ body{padding:16px;padding-bottom:115px}
+ .menu-image{height:150px}
+ .topping-item{padding:9px 7px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-amber-800 text-white p-3 rounded-xl text-center font-bold mb-3 shadow">
+  <div id="titleText" class="text-lg">🧋 สั่งเครื่องดื่ม</div>
+  <div id="subtitleText" class="text-xs opacity-90 mt-1">สั่งกลับบ้าน</div>
+</div>
+
+<div class="bg-white rounded-xl p-2 mb-3 shadow-sm">
+  <div id="languageText" class="text-xs text-gray-500 mb-2 text-center">ภาษา / Language</div>
+  <div class="grid grid-cols-4 gap-2">
+    <button id="lang-th" onclick="changeLanguage('th')" class="language-button rounded-lg border font-bold text-sm bg-amber-800 text-white">🇹🇭 ไทย</button>
+    <button id="lang-my" onclick="changeLanguage('my')" class="language-button rounded-lg border font-bold text-sm bg-white">🇲🇲 မြန်မာ</button>
+    <button id="lang-zh" onclick="changeLanguage('zh')" class="language-button rounded-lg border font-bold text-sm bg-white">🇨🇳 中文</button>
+    <button id="lang-en" onclick="changeLanguage('en')" class="language-button rounded-lg border font-bold text-sm bg-white">🇬🇧 English</button>
+  </div>
+</div>
+
+<div class="mb-3">
+  <input id="tableNo" type="text" value="สั่งกลับบ้าน"
+         class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white"
+         placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
+</div>
+
+<div id="menuContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+  <div class="loading col-span-full">กำลังโหลดเมนู...</div>
+</div>
+
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-50">
+  <div class="max-w-7xl mx-auto flex justify-between items-center gap-3">
+    <div>
+      <div id="cartLabel" class="text-xs text-gray-500">
+        ราคารวม (<span id="cartCount">0</span> <span id="itemText">รายการ</span>)
+      </div>
+      <div class="text-xl font-bold text-amber-900"><span id="cartTotal">0</span> ฿</div>
+    </div>
+    <button id="submitButton" onclick="submitOrder()"
+            class="bg-amber-800 text-white px-5 py-3 rounded-xl font-bold active:scale-95 transition">
+      🚀 <span id="submitText">ยืนยันสั่งซื้อ</span>
+    </button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+let menuData = [];
+let toppingData = [];
+let cart = [];
+let currentLanguage = localStorage.getItem("orderLanguage") || "th";
+let submitting = false;
+
+const translations = {
+  th:{
+    title:"🧋 สั่งเครื่องดื่ม", subtitle:"สั่งกลับบ้าน", language:"ภาษา / Language",
+    customerPlaceholder:"ระบุชื่อลูกค้า/คิว", noTopping:"ไม่ใส่ท็อปปิ้ง",
+    topping:"ท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
+    item:"รายการ", confirm:"ยืนยันสั่งซื้อ", loading:"กำลังโหลดเมนู...",
+    loadingError:"โหลดข้อมูลเมนูไม่สำเร็จ", enterCustomer:"กรุณากรอกชื่อ/คิว",
+    emptyCart:"ยังไม่ได้เลือกรายการ", success:"🎉 ส่งออเดอร์เรียบร้อย!",
+    error:"เกิดข้อผิดพลาดในการส่งออเดอร์", sending:"กำลังส่ง..."
+  },
+  my:{
+    title:"🧋 အဖျော်ယမကာ မှာယူရန်", subtitle:"အိမ်ယူရန်", language:"ဘာသာစကား / Language",
+    customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", noTopping:"Topping မထည့်ပါ",
+    topping:"Topping", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
+    item:"รายการ", confirm:"အော်ဒါတင်မည်", loading:"မီနူးများ ဖွင့်နေသည်...",
+    loadingError:"မီနူးဒေတာ ဖွင့်၍မရပါ", enterCustomer:"ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
+    emptyCart:"ပစ္စည်းမရွေးရသေးပါ", success:"🎉 အော်ဒါတင်ပြီးပါပြီ!",
+    error:"အော်ဒါပို့ရာတွင် အမှားဖြစ်နေပါသည်", sending:"ပို့နေသည်..."
+  },
+  zh:{
+    title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
+    customerPlaceholder:"请输入顾客姓名/号码", noTopping:"不加配料",
+    topping:"配料", selected:"已选择", order:"下单", total:"总价", item:"项",
+    confirm:"确认下单", loading:"正在加载菜单...", loadingError:"菜单加载失败",
+    enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
+    success:"🎉 订单提交成功！", error:"订单提交失败", sending:"正在提交..."
+  },
+  en:{
+    title:"🧋 Drink Order", subtitle:"Take Away", language:"Language",
+    customerPlaceholder:"Customer name / Queue", noTopping:"No toppings",
+    topping:"Toppings", selected:"Selected", order:"Order", total:"Total",
+    item:"items", confirm:"Confirm Order", loading:"Loading menu...",
+    loadingError:"Unable to load menu", enterCustomer:"Please enter customer name / queue",
+    emptyCart:"Please select an item", success:"🎉 Order submitted successfully!",
+    error:"Failed to submit order", sending:"Sending..."
+  }
+};
+
+function t(key){
+  return (translations[currentLanguage] && translations[currentLanguage][key])
+      || translations.th[key] || key;
+}
+
+function getMenuName(item){
+  if(currentLanguage==="my") return item.name_my || item.name;
+  if(currentLanguage==="zh") return item.name_zh || item.name;
+  if(currentLanguage==="en") return item.name_en || item.name;
+  return item.name;
+}
+
+function getToppingName(item){
+  if(currentLanguage==="my") return item.name_my || item.name;
+  if(currentLanguage==="zh") return item.name_zh || item.name;
+  if(currentLanguage==="en") return item.name_en || item.name;
+  return item.name;
+}
+
+function changeLanguage(language){
+  currentLanguage = language;
+  localStorage.setItem("orderLanguage", language);
+  updateLanguageButtons();
+  updateStaticTexts();
+  renderMenu();
+}
+
+function updateLanguageButtons(){
+  ["th","my","zh","en"].forEach(lang=>{
+    const button=document.getElementById(`lang-${lang}`);
+    if(!button) return;
+    button.className = lang===currentLanguage
+      ? "language-button rounded-lg border font-bold text-sm bg-amber-800 text-white"
+      : "language-button rounded-lg border font-bold text-sm bg-white";
+  });
+}
+
+function updateStaticTexts(){
+  document.getElementById("titleText").innerText=t("title");
+  document.getElementById("subtitleText").innerText=t("subtitle");
+  document.getElementById("languageText").innerText=t("language");
+  document.getElementById("tableNo").placeholder=t("customerPlaceholder");
+  document.getElementById("submitText").innerText=t("confirm");
+  updateCartUI();
+}
+
+async function loadInitData(){
+  try{
+    const response=await fetch("/api/init-data",{method:"GET",cache:"no-store"});
+    const data=await response.json();
+    if(!response.ok || !data.success) throw new Error(data.error || "Load error");
+
+    menuData=Array.isArray(data.menu) ? data.menu : [];
+    toppingData=Array.isArray(data.toppings) ? data.toppings : [];
+    renderMenu();
+  }catch(error){
+    console.error(error);
+    document.getElementById("menuContainer").innerHTML=
+      `<div class="col-span-full text-center p-10 text-red-600">❌ ${escapeHTML(t("loadingError"))}</div>`;
+  }
+}
+
+function renderMenu(){
+  const container=document.getElementById("menuContainer");
+
+  if(!menuData.length){
+    container.innerHTML=`<div class="col-span-full loading">${escapeHTML(t("loadingError"))}</div>`;
+    return;
+  }
+
+  container.innerHTML=menuData.map((item,menuIndex)=>{
+    const toppingsHTML=toppingData.length
+      ? `<div class="topping-box mt-2">
+           <div class="text-xs font-bold text-amber-800 p-2 border-b">${escapeHTML(t("topping"))}</div>
+           <div>
+             ${toppingData.map((top,topIndex)=>`
+               <label class="topping-item">
+                 <input type="checkbox" class="topping-checkbox"
+                        data-menu-index="${menuIndex}" data-topping-index="${topIndex}">
+                 <span class="text-xs flex-1">${escapeHTML(getToppingName(top))}</span>
+                 <span class="text-xs text-amber-700 whitespace-nowrap">+${formatPrice(top.price)} ฿</span>
+               </label>
+             `).join("")}
+           </div>
+         </div>`
+      : `<div class="text-xs text-gray-400 mt-2">${escapeHTML(t("noTopping"))}</div>`;
+
+    return `
+      <div class="menu-card p-2 flex flex-col">
+        <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
+             class="menu-image" loading="lazy" alt="">
+        <div class="mt-2">
+          <div class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
+          <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
+        </div>
+        ${toppingsHTML}
+        <div id="selected-${menuIndex}" class="selected-count mt-2 min-h-[16px]"></div>
+        <button onclick="addToCart(${menuIndex})"
+                class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-95 transition">
+          ➕ ${escapeHTML(t("order"))}
+        </button>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll(".topping-checkbox").forEach(cb=>{
+    cb.addEventListener("change",updateSelectedCount);
+  });
+}
+
+function updateSelectedCount(event){
+  const menuIndex=event.target.dataset.menuIndex;
+  const selected=document.querySelectorAll(
+    `input[data-menu-index="${menuIndex}"]:checked`
+  );
+  const display=document.getElementById(`selected-${menuIndex}`);
+  if(display) display.innerText=selected.length ? `${t("selected")} ${selected.length}` : "";
+}
+
+function getSelectedToppings(menuIndex){
+  const selected=document.querySelectorAll(
+    `input[data-menu-index="${menuIndex}"]:checked`
+  );
+
+  return Array.from(selected).map(cb=>{
+    const topping=toppingData[Number(cb.dataset.toppingIndex)];
+    if(!topping) return null;
+    return {
+      name:topping.name,
+      name_my:topping.name_my || topping.name,
+      name_zh:topping.name_zh || topping.name,
+      name_en:topping.name_en || topping.name,
+      price:Number(topping.price)
+    };
+  }).filter(Boolean);
+}
+
+function addToCart(menuIndex){
+  const item=menuData[menuIndex];
+  if(!item) return;
+
+  const toppings=getSelectedToppings(menuIndex);
+  const totalPrice=Number(item.price)+toppings.reduce((sum,t)=>sum+Number(t.price),0);
+
+  cart.push({
+    menu_name:item.name,
+    menu_name_my:item.name_my || item.name,
+    menu_name_zh:item.name_zh || item.name,
+    menu_name_en:item.name_en || item.name,
+    price:Number(item.price),
+    toppings:toppings,
+    total_price:totalPrice
+  });
+
+  resetToppingsForMenu(menuIndex);
+  updateCartUI();
+}
+
+function resetToppingsForMenu(menuIndex){
+  document.querySelectorAll(`input[data-menu-index="${menuIndex}"]`).forEach(cb=>cb.checked=false);
+  const display=document.getElementById(`selected-${menuIndex}`);
+  if(display) display.innerText="";
+}
+
+function resetAllForm(){
+  cart=[];
+  document.querySelectorAll(".topping-checkbox").forEach(cb=>cb.checked=false);
+  document.querySelectorAll(".selected-count").forEach(el=>el.innerText="");
+
+  const input=document.getElementById("tableNo");
+  input.value=currentLanguage==="th" ? "สั่งกลับบ้าน" : "";
+
+  updateCartUI();
+}
+
+function updateCartUI(){
+  const count=cart.length;
+  const total=cart.reduce((sum,item)=>sum+Number(item.total_price),0);
+
+  document.getElementById("cartLabel").innerHTML=
+    `${escapeHTML(t("total"))} (<span id="cartCount">${count}</span> <span id="itemText">${escapeHTML(t("item"))}</span>)`;
+  document.getElementById("cartTotal").innerText=formatPrice(total);
+}
+
+async function submitOrder(){
+  if(submitting) return;
+
+  const tableNo=document.getElementById("tableNo").value.trim();
+
+  if(!tableNo){
+    alert(t("enterCustomer"));
+    return;
+  }
+
+  if(!cart.length){
+    alert(t("emptyCart"));
+    return;
+  }
+
+  const total=cart.reduce((sum,item)=>sum+Number(item.total_price),0);
+  submitting=true;
+
+  const button=document.getElementById("submitButton");
+  button.disabled=true;
+  button.classList.add("opacity-60");
+  document.getElementById("submitText").innerText=t("sending");
+
+  try{
+    const response=await fetch("/api/order",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        table_number:tableNo,
+        cart:cart,
+        total_price:total
+      })
+    });
+
+    const data=await response.json();
+
+    if(!response.ok || !data.success){
+      throw new Error(data.error || "Order error");
+    }
+
+    resetAllForm();
+    alert(t("success"));
+
+  }catch(error){
+    console.error(error);
+    alert(t("error") + "\n" + error.message);
+  }finally{
+    submitting=false;
+    button.disabled=false;
+    button.classList.remove("opacity-60");
+    document.getElementById("submitText").innerText=t("confirm");
+  }
+}
+
+function formatPrice(price){
+  return (Number(price)||0).toLocaleString("en-US",{maximumFractionDigits:2});
+}
+
+function escapeHTML(value){
+  if(value===null || value===undefined) return "";
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function escapeAttribute(value){
+  return escapeHTML(value);
+}
+
+updateLanguageButtons();
+updateStaticTexts();
+loadInitData();
+</script>
+
+</body>
+</html>
