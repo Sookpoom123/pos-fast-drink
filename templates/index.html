@@ -3,57 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧋 สั่งเครื่องดื่ม</title>
+    <title>🧋 Order Drinks</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #F4EFEA; font-family: sans-serif; touch-action: manipulation; }
+        body { background-color: #F4EFEA; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
         .card { background: white; border-radius: 12px; border: 1.5px solid #C8B2A2; }
     </style>
 </head>
 <body class="p-3">
 
-    <div class="bg-amber-800 text-white p-3 rounded-lg text-center font-bold mb-3 shadow">
+    <!-- แถบเลือกภาษา -->
+    <div class="flex justify-end gap-1 mb-2">
+        <button onclick="changeLang('th')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇹🇭 TH</button>
+        <button onclick="changeLang('en')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇬🇧 EN</button>
+        <button onclick="changeLang('zh')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇨🇳 ZH</button>
+        <button onclick="changeLang('my')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇲🇲 MY</button>
+    </div>
+
+    <!-- หัวข้อ -->
+    <div id="ui-title" class="bg-amber-800 text-white p-3 rounded-lg text-center font-bold mb-3 shadow">
         🧋 สั่งเครื่องดื่ม (กลับบ้าน)
     </div>
 
+    <!-- ช่องระบุชื่อ/คิว -->
     <div class="mb-3">
-        <input id="tableNo" type="text" value="สั่งกลับบ้าน" class="w-full p-2 border border-amber-300 rounded-lg text-sm" placeholder="ระบุชื่อลูกค้า/คิว">
+        <input id="tableNo" type="text" value="สั่งกลับบ้าน" class="w-full p-2 border border-amber-300 rounded-lg text-sm">
     </div>
 
+    <!-- รายการเมนู -->
     <div id="menuContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-24"></div>
 
+    <!-- แถบสรุปออเดอร์ด้านล่าง -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 flex justify-between items-center shadow-lg z-50">
         <div>
-            <div class="text-xs text-gray-500">ราคารวม (<span id="cartCount">0</span> รายการ)</div>
+            <div class="text-xs text-gray-500"><span id="ui-total-label">ราคารวม</span> (<span id="cartCount">0</span> <span id="ui-item-label">รายการ</span>)</div>
             <div class="text-xl font-bold text-amber-900"><span id="cartTotal">0</span> ฿</div>
         </div>
-        <button onclick="submitOrder()" class="bg-amber-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-amber-900 active:scale-95 transition">
+        <button id="ui-submit-btn" onclick="submitOrder()" class="bg-amber-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-amber-900 active:scale-95 transition">
             🚀 ยืนยันสั่งซื้อ
         </button>
     </div>
 
     <script>
+        const i18n = {
+            th: {
+                title: '🧋 สั่งเครื่องดื่ม (กลับบ้าน)',
+                tablePlaceholder: 'ระบุชื่อลูกค้า/คิว',
+                tableDefault: 'สั่งกลับบ้าน',
+                noTopping: '-- ไม่ใส่ท็อปปิ้ง --',
+                addBtn: '➕ สั่ง',
+                totalLabel: 'ราคารวม',
+                itemLabel: 'รายการ',
+                submitBtn: '🚀 ยืนยันสั่งซื้อ',
+                errLoad: 'โหลดข้อมูลเมนูไม่สำเร็จ',
+                alertName: 'กรุณากรอกชื่อ/คิว',
+                alertEmpty: 'ยังไม่ได้เลือกรายการ',
+                alertSuccess: '🎉 ส่งออเดอร์เรียบร้อย!',
+                alertErr: 'เกิดข้อผิดพลาดในการส่งออเดอร์'
+            },
+            en: {
+                title: '🧋 Order Drinks (Takeaway)',
+                tablePlaceholder: 'Customer Name / Queue',
+                tableDefault: 'Takeaway',
+                noTopping: '-- No Topping --',
+                addBtn: '➕ Add',
+                totalLabel: 'Total',
+                itemLabel: 'items',
+                submitBtn: '🚀 Confirm Order',
+                errLoad: 'Failed to load menu data',
+                alertName: 'Please enter name/queue',
+                alertEmpty: 'Cart is empty',
+                alertSuccess: '🎉 Order submitted!',
+                alertErr: 'Order submission failed'
+            },
+            zh: {
+                title: '🧋 订购饮料 (外带)',
+                tablePlaceholder: '顾客姓名 / 取餐号',
+                tableDefault: '外带',
+                noTopping: '-- 不加配料 --',
+                addBtn: '➕ 点餐',
+                totalLabel: '总计',
+                itemLabel: '项',
+                submitBtn: '🚀 确认下单',
+                errLoad: '加载菜单失败',
+                alertName: '请输入姓名或取餐号',
+                alertEmpty: '购物车为空',
+                alertSuccess: '🎉 下单成功！',
+                alertErr: '下单发生错误'
+            },
+            my: {
+                title: '🧋 အဖျော်ယမကာ မှာယူရန် (ပါဆယ်)',
+                tablePlaceholder: 'အမည် / ကျူးနံပါတ်',
+                tableDefault: 'ပါဆယ်',
+                noTopping: '-- တော့ပင်း မယူပါ --',
+                addBtn: '➕ မှာမည်',
+                totalLabel: 'စုစုပေါင်း',
+                itemLabel: 'ခု',
+                submitBtn: '🚀 မှာယူမှု အတည်ပြုမည်',
+                errLoad: 'မမီနူး ဒေတာ ရယူ၍ မရပါ',
+                alertName: 'ကျေးဇူးပြု၍ အမည်ဖြည့်ပါ',
+                alertEmpty: 'ပစ္စည်း မရွေးရသေးပါ',
+                alertSuccess: '🎉 မှာယူမှု အောင်မြင်ပါသည်!',
+                alertErr: 'မှာယူမှု မအောင်မြင်ပါ'
+            }
+        };
+
+        let currentLang = 'th';
         let menuData = [];
         let toppingData = [];
         let cart = [];
+
+        function changeLang(lang) {
+            currentLang = lang;
+            const t = i18n[lang];
+
+            document.getElementById('ui-title').innerText = t.title;
+            const tableInput = document.getElementById('tableNo');
+            tableInput.placeholder = t.tablePlaceholder;
+            
+            if (Object.values(i18n).some(item => item.tableDefault === tableInput.value)) {
+                tableInput.value = t.tableDefault;
+            }
+
+            document.getElementById('ui-total-label').innerText = t.totalLabel;
+            document.getElementById('ui-item-label').innerText = t.itemLabel;
+            document.getElementById('ui-submit-btn').innerText = t.submitBtn;
+
+            if (menuData.length > 0) {
+                renderMenu();
+            }
+        }
 
         async function loadInitData() {
             try {
                 const res = await fetch('/api/init-data');
                 const data = await res.json();
-                menuData = data.menu;
-                toppingData = data.toppings;
+                menuData = data.menu || [];
+                toppingData = data.toppings || [];
                 renderMenu();
             } catch (err) {
-                alert('โหลดข้อมูลเมนูไม่สำเร็จ');
+                alert(i18n[currentLang].errLoad);
             }
         }
 
         function renderMenu() {
             const container = document.getElementById('menuContainer');
+            const t = i18n[currentLang];
+
+            if (!menuData || menuData.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">ไม่มีข้อมูลเมนู</div>`;
+                return;
+            }
+
             container.innerHTML = menuData.map((item, idx) => `
                 <div class="card p-2 text-center flex flex-col justify-between">
                     <div>
                         <img src="${item.image_url || 'https://via.placeholder.com/100'}" class="h-24 w-full object-contain mb-1 rounded">
                         <div class="font-bold text-sm text-gray-800">${item.name}</div>
                         <div class="text-amber-800 font-extrabold text-sm">${item.price} ฿</div>
+                    </div>
+                    
+                    <select id="topping-${idx}" class="w-full text-xs p-1 border rounded mt-2 bg-gray-50">
+                        <option value="">${t.noTopping}</option>
+                        ${toppingData.map(top => `<option value="${top.name}|${top.price}">${top.name} (+${top.price}฿)</option>`).join('')}
+                    </select>
+
+                    <button onclick="addToCart(${idx})" class="w-full bg-amber-800 text-white text-xs font-bold py-2 rounded mt-2 active:bg-amber-900 active:scale-95 transition">
+                        ${t.addBtn}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(menuIdx) {
+            const item = menuData[menuIdx];
+            const toppingSelect = document.getElementById(`topping-${menuIdx}`);
+            let price = item.price;
+            let name = item.name;
+
+            if (toppingSelect.value) {
+                const [topName, topPrice] = toppingSelect.value.split('|');
+                price += parseFloat(topPrice);
+                name += ` (+${topName})`;
+            }
+
+            cart.push({ name, price });
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCount').innerText = cart.length;
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('cartTotal').innerText = total;
+        }
+
+        async function submitOrder() {
+            const t = i18n[currentLang];
+            const tableNo = document.getElementById('tableNo').value;
+            
+            if (!tableNo.trim()) return alert(t.alertName);
+            if (cart.length === 0) return alert(t.alertEmpty);
+
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+            try {
+                const res = await fetch('/api/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table_number: tableNo, cart: cart, total_price: total })
+                });
+
+                if (res.ok) {
+                    alert(t.alertSuccess);
+                    cart = [];
+                    updateCartUI();
+                }
+            } catch (err) {
+                alert(t.alertErr);
+            }
+        }
+
+        loadInitData();
+    </script>
+</body>
+</html>
