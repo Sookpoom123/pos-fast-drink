@@ -102,10 +102,10 @@ let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
-// 🤖 ระบบ Cache ความจำคำแปลของกูเกิล เพื่อไม่ต้องดึงซ้ำ
+// 🤖 ระบบ Cache เก็บคำแปลทุกภาษาเพื่อไม่ต้องดึงซ้ำ
 const translationCache = {};
 
-// 📖 พจนานุกรมแปลแบบแมนนวล (สำรองไว้ใช้สำหรับคำเฉพาะ)
+// 📖 พจนานุกรมแปลสำรอง (คำเฉพาะ)
 const itemDictionary = {
   "ชาไทย": { en: "Thai Tea", zh: "泰式奶茶", my: "ထိုင်းလက်ဖက်ရည်" },
   "ชาเขียว": { en: "Green Tea", zh: "绿茶", my: "လက်ဖက်စိမ်း" },
@@ -163,30 +163,40 @@ function t(key){
       || translations.th[key] || key;
 }
 
-// 🌐 ฟังก์ชันดึงคำแปลอัตโนมัติผ่าน Google Translate Free API
-async function autoTranslateText(text, targetLang) {
-  if (!text) return "";
-  if (targetLang === "th") return text;
+// ⚡ แปลคำหลายๆ คำพร้อมกันในครั้งเดียว (Batch Translation)
+async function batchTranslateTexts(texts, targetLang) {
+  if (!texts.length || targetLang === "th") return {};
   
-  // แปลงโค้ดภาษาของพม่าให้ตรงตามรูปแบบ Google
-  const langCode = targetLang === "my" ? "my" : targetLang; 
-  const cacheKey = `${text}_${langCode}`;
-
-  if (translationCache[cacheKey]) return translationCache[cacheKey];
-
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(text)}`;
-    const response = await fetch(url);
-    const result = await response.json();
-    if (result && result[0] && result[0][0] && result[0][0][0]) {
-      const translated = result[0][0][0];
-      translationCache[cacheKey] = translated;
-      return translated;
+  const langCode = targetLang === "my" ? "my" : targetLang;
+  const missingTexts = texts.filter(t => !translationCache[`${t}_${langCode}`]);
+  
+  if (missingTexts.length > 0) {
+    // รวมคำทั้งหมดเข้าด้วยกันโดยใช้สัญลักษณ์ตัวแบ่งพิเศษ " ||| "
+    const combinedText = missingTexts.join(" ||| ");
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(combinedText)}`;
+      const response = await fetch(url);
+      const result = await response.json();
+      
+      if (result && result[0] && result[0][0] && result[0][0][0]) {
+        const fullTranslatedText = result[0].map(item => item[0]).join('');
+        const translatedArray = fullTranslatedText.split("|||");
+        
+        missingTexts.forEach((originalText, index) => {
+          const translated = translatedArray[index] ? translatedArray[index].trim() : originalText;
+          translationCache[`${originalText}_${langCode}`] = translated;
+        });
+      }
+    } catch (e) {
+      console.warn("Batch translate error:", e);
     }
-  } catch (e) {
-    console.warn("Auto translate error:", e);
   }
-  return text;
+
+  const resultMap = {};
+  texts.forEach(text => {
+    resultMap[text] = translationCache[`${text}_${langCode}`] || text;
+  });
+  return resultMap;
 }
 
 function getMenuName(item){
@@ -194,7 +204,7 @@ function getMenuName(item){
   if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
     return itemDictionary[item.name][currentLanguage];
   }
-  return item[`name_${currentLanguage}`] || item.name;
+  return translationCache[`${item.name}_${currentLanguage}`] || item[`name_${currentLanguage}`] || item.name;
 }
 
 function getToppingName(item){
@@ -202,7 +212,7 @@ function getToppingName(item){
   if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
     return itemDictionary[item.name][currentLanguage];
   }
-  return item[`name_${currentLanguage}`] || item.name;
+  return translationCache[`${item.name}_${currentLanguage}`] || item[`name_${currentLanguage}`] || item.name;
 }
 
 async function changeLanguage(language){
@@ -210,42 +220,18 @@ async function changeLanguage(language){
   localStorage.setItem("orderLanguage", language);
   updateLanguageButtons();
   updateStaticTexts();
-  renderMenu();
   
-  // สั่งให้ระบบแปลคำแปลใหม่อัตโนมัติทุกเมนูที่ไม่มีแปล
   if(language !== "th") {
-    await translateAllItemsAuto();
+    // รวบรวมข้อความชื่อเมนูและท็อปปิ้งทั้งหมดส่งแปลแบบก้อนเดียว
+    const allTexts = [];
+    menuData.forEach(m => allTexts.push(m.name));
+    toppingData.forEach(t => allTexts.push(t.name));
+    
+    await batchTranslateTexts(allTexts, language);
   }
-}
-
-async function translateAllItemsAuto() {
-  const targetLang = currentLanguage;
   
-  // แปลเมนูทั้งหมด
-  for (let i = 0; i < menuData.length; i++) {
-    const item = menuData[i];
-    if (!itemDictionary[item.name] || !itemDictionary[item.name][targetLang]) {
-      const translated = await autoTranslateText(item.name, targetLang);
-      const elem = document.getElementById(`menu-name-${i}`);
-      if (elem && currentLanguage === targetLang) {
-        elem.innerText = translated;
-      }
-    }
-  }
-
-  // แปลท็อปปิ้งทั้งหมด
-  for (let mIdx = 0; mIdx < menuData.length; mIdx++) {
-    for (let tIdx = 0; tIdx < toppingData.length; tIdx++) {
-      const top = toppingData[tIdx];
-      if (!itemDictionary[top.name] || !itemDictionary[top.name][targetLang]) {
-        const translated = await autoTranslateText(top.name, targetLang);
-        const elem = document.getElementById(`topping-name-${mIdx}-${tIdx}`);
-        if (elem && currentLanguage === targetLang) {
-          elem.innerText = translated;
-        }
-      }
-    }
-  }
+  // แสดงผลหน้าจอพร้อมกันทีเดียวทั้งหมด
+  renderMenu();
 }
 
 function updateLanguageButtons(){
@@ -276,10 +262,15 @@ async function loadInitData(){
 
     menuData=Array.isArray(data.menu) ? data.menu : [];
     toppingData=Array.isArray(data.toppings) ? data.toppings : [];
-    renderMenu();
+    
     if(currentLanguage !== "th") {
-      translateAllItemsAuto();
+      const allTexts = [];
+      menuData.forEach(m => allTexts.push(m.name));
+      toppingData.forEach(t => allTexts.push(t.name));
+      await batchTranslateTexts(allTexts, currentLanguage);
     }
+    
+    renderMenu();
   }catch(error){
     console.error(error);
     document.getElementById("menuContainer").innerHTML=
