@@ -6,122 +6,133 @@ import json
 app = Flask(_name_)
 
 # =========================================================
-# Database
+# DATABASE
 # =========================================================
 
 DB_URL = os.environ.get("DATABASE_URL")
 
 
 def get_db():
-    return psycopg2.connect(
-        DB_URL,
-        sslmode="require"
-    )
+    if not DB_URL:
+        raise Exception("ไม่พบ DATABASE_URL")
+    return psycopg2.connect(DB_URL)
 
 
 # =========================================================
-# โหลดข้อมูลเมนู + ท็อปปิ้ง
+# API: โหลดเมนู + ท็อปปิ้ง
 # =========================================================
 
-@app.route("/api/init-data", methods=["GET"])
+@app.route('/api/init-data', methods=['GET'])
 def get_init_data():
-
     conn = None
 
     try:
-
         conn = get_db()
         cursor = conn.cursor()
 
-        # -----------------------------
-        # เมนู
-        # -----------------------------
-
+        # -------------------------
+        # MENU
+        # -------------------------
         cursor.execute("""
-            SELECT name, price, image_url
+            SELECT
+                name,
+                price,
+                image_url,
+                COALESCE(name_my, name) AS name_my,
+                COALESCE(name_zh, name) AS name_zh,
+                COALESCE(name_en, name) AS name_en
             FROM menu_items
             ORDER BY name ASC
         """)
 
-        menu = [
-            {
-                "name": row[0],
-                "price": float(row[1]),
-                "image_url": row[2]
-            }
-            for row in cursor.fetchall()
-        ]
+        menu = []
 
-        # -----------------------------
-        # ท็อปปิ้ง
-        # -----------------------------
+        for r in cursor.fetchall():
+            menu.append({
+                "name": r[0],
+                "price": float(r[1]),
+                "image_url": r[2],
+                "name_my": r[3],
+                "name_zh": r[4],
+                "name_en": r[5]
+            })
 
+        # -------------------------
+        # TOPPINGS
+        # -------------------------
         cursor.execute("""
-            SELECT name, price
+            SELECT
+                name,
+                price,
+                COALESCE(name_my, name) AS name_my,
+                COALESCE(name_zh, name) AS name_zh,
+                COALESCE(name_en, name) AS name_en
             FROM toppings
             ORDER BY price ASC
         """)
 
-        toppings = [
-            {
-                "name": row[0],
-                "price": float(row[1])
-            }
-            for row in cursor.fetchall()
-        ]
+        toppings = []
+
+        for r in cursor.fetchall():
+            toppings.append({
+                "name": r[0],
+                "price": float(r[1]),
+                "name_my": r[2],
+                "name_zh": r[3],
+                "name_en": r[4]
+            })
+
+        cursor.close()
 
         return jsonify({
+            "success": True,
             "menu": menu,
             "toppings": toppings
         })
 
     except Exception as e:
-
-        print("Database Error:", e)
-
         return jsonify({
+            "success": False,
             "error": str(e)
         }), 500
 
     finally:
-
         if conn:
             conn.close()
 
 
 # =========================================================
-# รับออเดอร์
+# API: สั่งซื้อ
 # =========================================================
 
-@app.route("/api/order", methods=["POST"])
+@app.route('/api/order', methods=['POST'])
 def create_order():
 
     conn = None
 
     try:
-
-        data = request.get_json(silent=True)
+        data = request.get_json()
 
         if not data:
             return jsonify({
                 "success": False,
-                "error": "Invalid request"
+                "error": "ไม่มีข้อมูลออเดอร์"
             }), 400
 
-        table_number = data.get("table_number")
-        cart = data.get("cart")
-        total_price = data.get("total_price")
+        table_number = str(data.get('table_number', '')).strip()
+        cart = data.get('cart', [])
+        total_price = float(data.get('total_price', 0))
 
         if not table_number:
             return jsonify({
                 "success": False,
-                "error": "Missing customer name"
+                "error": "กรุณากรอกชื่อ/คิว"
             }), 400
 
         if not cart:
             return jsonify({
                 "success": False,
-                "error": "Cart is empty"
+                "error": "ยังไม่มีรายการสินค้า"
             }), 400
 
         conn = get_db()
@@ -140,24 +151,22 @@ def create_order():
             """,
             (
                 table_number,
-                json.dumps(
-                    cart,
-                    ensure_ascii=False
-                ),
+                json.dumps(cart, ensure_ascii=False),
                 total_price,
-                "pending"
+                'pending'
             )
         )
 
         conn.commit()
 
+        cursor.close()
+
         return jsonify({
-            "success": True
+            "success": True,
+            "message": "ส่งออเดอร์เรียบร้อย"
         })
 
     except Exception as e:
-
-        print("Order Error:", e)
 
         if conn:
             conn.rollback()
@@ -168,27 +177,25 @@ def create_order():
         }), 500
 
     finally:
-
         if conn:
             conn.close()
 
 
 # =========================================================
-# หน้าเว็บ
+# HOME
 # =========================================================
 
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
 
 # =========================================================
-# Run
+# RUN
 # =========================================================
 
-if _name_ == "_main_":
-
+if _name_ == '_main_':
     app.run(
-        host="0.0.0.0",
-        port=5000
+        host='0.0.0.0',
+        port=int(os.environ.get('PORT', 5000))
     )
