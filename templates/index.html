@@ -48,15 +48,26 @@ button,input,label{touch-action:manipulation}
   </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-  <input id="tableNo" type="text" value="สั่งกลับบ้าน"
-         class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
-         placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
+<!-- เพิ่มตัวเลือกวันที่สั่งซื้อ -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+  <div>
+    <label id="dateLabel" class="block text-xs text-gray-600 mb-1 font-bold">📅 วันที่สั่งซื้อ:</label>
+    <input id="orderDate" type="date"
+           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm font-semibold text-gray-700">
+  </div>
 
-  <div class="relative">
+  <div>
+    <label id="customerLabel" class="block text-xs text-gray-600 mb-1 font-bold">👤 ชื่อลูกค้า/คิว:</label>
+    <input id="tableNo" type="text" value="สั่งกลับบ้าน"
+           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
+           placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
+  </div>
+
+  <div>
+    <label id="searchLabel" class="block text-xs text-gray-600 mb-1 font-bold">🔍 ค้นหาเมนู:</label>
     <input id="searchInput" type="text" oninput="filterMenu()"
-           class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
-           placeholder="🔍 ค้นหาเมนู..." autocomplete="off">
+           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
+           placeholder="ค้นหา..." autocomplete="off">
   </div>
 </div>
 
@@ -124,7 +135,8 @@ const itemDictionary = {
 const translations = {
   th:{
     title:"🧋 สั่งเครื่องดื่ม", subtitle:"สั่งกลับบ้าน", language:"ภาษา / Language",
-    customerPlaceholder:"ระบุชื่อลูกค้า/คิว", searchPlaceholder:"🔍 ค้นหาเมนู...", noTopping:"ไม่ใส่ท็อปปิ้ง",
+    dateLabel:"📅 วันที่สั่งซื้อ:", customerLabel:"👤 ชื่อลูกค้า/คิว:", searchLabel:"🔍 ค้นหาเมนู:",
+    customerPlaceholder:"ระบุชื่อลูกค้า/คิว", searchPlaceholder:"ค้นหา...", noTopping:"ไม่ใส่ท็อปปิ้ง",
     selectTopping:"เลือกท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
     item:"รายการ", confirm:"ยืนยันสั่งซื้อ", loading:"กำลังโหลดเมนู...",
     loadingError:"โหลดข้อมูลเมนูไม่สำเร็จ", enterCustomer:"กรุณากรอกชื่อ/คิว",
@@ -135,7 +147,8 @@ const translations = {
   },
   my:{
     title:"🧋 အဖျော်ယမကာ မှာယူရန်", subtitle:"အိမ်ယူရန်", language:"ဘာသာစကား / Language",
-    customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", searchPlaceholder:"🔍 မီနူး ရှာဖွေပါ...", noTopping:"Topping မထည့်ပါ",
+    dateLabel:"📅 ရက်စွဲ:", customerLabel:"👤 အမည် / ကူပွန်:", searchLabel:"🔍 ရှာရန်:",
+    customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", searchPlaceholder:"ရှာရန်...", noTopping:"Topping မထည့်ပါ",
     selectTopping:"Topping ရွေးမည်", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
     item:"รายการ", confirm:"အော်ဒါတင်မည်", loading:"မီနူးများ ဖွင့်နေသည်...",
     loadingError:"မီနူးဒေတာ ဖွင့်၍မရပါ", enterCustomer:"ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
@@ -146,7 +159,8 @@ const translations = {
   },
   zh:{
     title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
-    customerPlaceholder:"请输入顾客姓名/号码", searchPlaceholder:"🔍 搜索饮料...", noTopping:"不加配料",
+    dateLabel:"📅 点单日期:", customerLabel:"👤 顾客姓名/号码:", searchLabel:"🔍 搜索飲料:",
+    customerPlaceholder:"请输入顾客姓名/号码", searchPlaceholder:"搜索...", noTopping:"不加配料",
     selectTopping:"选择配料", selected:"已选择", order:"下单", total:"总价", item:"项",
     confirm:"确认下单", loading:"กำลัง加载菜单...", loadingError:"菜单加载失败",
     enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
@@ -156,7 +170,8 @@ const translations = {
   },
   en:{
     title:"🧋 Drink Order", subtitle:"Take Away", language:"Language",
-    customerPlaceholder:"Customer name / Queue", searchPlaceholder:"🔍 Search menu...", noTopping:"No toppings",
+    dateLabel:"📅 Order Date:", customerLabel:"👤 Name / Queue:", searchLabel:"🔍 Search:",
+    customerPlaceholder:"Customer name / Queue", searchPlaceholder:"Search...", noTopping:"No toppings",
     selectTopping:"Select Toppings", selected:"Selected", order:"Order", total:"Total",
     item:"items", confirm:"Confirm Order", loading:"Loading menu...",
     loadingError:"Unable to load menu", enterCustomer:"Please enter customer name / queue",
@@ -170,6 +185,11 @@ const translations = {
 function t(key){
   return (translations[currentLanguage] && translations[currentLanguage][key])
       || translations.th[key] || key;
+}
+
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById("orderDate").value = today;
 }
 
 async function batchTranslateTexts(texts, targetLang) {
@@ -252,6 +272,9 @@ function updateStaticTexts(){
   document.getElementById("titleText").innerText=t("title");
   document.getElementById("subtitleText").innerText=t("subtitle");
   document.getElementById("languageText").innerText=t("language");
+  document.getElementById("dateLabel").innerText=t("dateLabel");
+  document.getElementById("customerLabel").innerText=t("customerLabel");
+  document.getElementById("searchLabel").innerText=t("searchLabel");
   document.getElementById("tableNo").placeholder=t("customerPlaceholder");
   document.getElementById("searchInput").placeholder=t("searchPlaceholder");
   document.getElementById("submitText").innerText=t("confirm");
@@ -489,6 +512,7 @@ function resetAllForm(){
   const input=document.getElementById("tableNo");
   input.value=currentLanguage==="th" ? "สั่งกลับบ้าน" : "";
   document.getElementById("searchInput").value = "";
+  setDefaultDate();
 
   updateCartUI();
 }
@@ -506,6 +530,7 @@ async function submitOrder(){
   if(submitting) return;
 
   const tableNo=document.getElementById("tableNo").value.trim();
+  const orderDate=document.getElementById("orderDate").value;
 
   if(!tableNo){
     alert(t("enterCustomer"));
@@ -525,7 +550,6 @@ async function submitOrder(){
   button.classList.add("opacity-60");
   document.getElementById("submitText").innerText=t("sending");
 
-  // แปลงโครงสร้าง cart ให้หลังบ้านนำไปแสดงผลชื่อรายการได้ตรงกัน
   const formattedCart = cart.map(item => {
     const toppingNames = item.toppings ? item.toppings.map(t => t.name).join(", ") : "";
     const fullName = toppingNames ? `${item.menu_name} (+${toppingNames})` : item.menu_name;
@@ -545,7 +569,8 @@ async function submitOrder(){
       body:JSON.stringify({
         table_number:tableNo,
         cart:formattedCart,
-        total_price:total
+        total_price:total,
+        order_date:orderDate
       })
     });
 
@@ -587,6 +612,7 @@ function escapeAttribute(value){
   return escapeHTML(value);
 }
 
+setDefaultDate();
 updateLanguageButtons();
 updateStaticTexts();
 loadInitData();
