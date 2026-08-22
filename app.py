@@ -9,10 +9,12 @@ app = Flask(__name__)
 DB_URL = os.environ.get("DATABASE_URL")
 
 def get_db():
-    return psycopg2.connect(DB_URL)
+    # เพิ่ม sslmode='require' เพื่อให้เชื่อมต่อ Database บน Cloud (Supabase/Render) ได้ถูกต้อง
+    return psycopg2.connect(DB_URL, sslmode='require')
 
 @app.route('/api/init-data', methods=['GET'])
 def get_init_data():
+    conn = None
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -21,13 +23,18 @@ def get_init_data():
         
         cursor.execute("SELECT name, price FROM toppings ORDER BY price ASC")
         toppings = [{"name": r[0], "price": float(r[1])} for r in cursor.fetchall()]
-        conn.close()
+        
         return jsonify({"menu": menu, "toppings": toppings})
     except Exception as e:
+        print(f"Database Error: {e}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/api/order', methods=['POST'])
 def create_order():
+    conn = None
     try:
         data = request.json
         conn = get_db()
@@ -37,10 +44,13 @@ def create_order():
             (data['table_number'], json.dumps(data['cart'], ensure_ascii=False), data['total_price'], 'pending')
         )
         conn.commit()
-        conn.close()
         return jsonify({"success": True})
     except Exception as e:
+        print(f"Order Error: {e}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/')
 def home():
