@@ -1,50 +1,83 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, render_template, request, jsonify
 import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
-import json
 
 app = Flask(__name__)
 
-# ดึง URL จาก Environment Variable
-DB_URL = os.environ.get("DATABASE_URL")
+def get_db_connection():
+    conn = psycopg2.connect(
+        os.environ.get("DATABASE_URL"),
+        cursor_factory=RealDictCursor
+    )
+    return conn
 
-def get_db():
-    return psycopg2.connect(DB_URL)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route('/api/init-data', methods=['GET'])
-def get_init_data():
+@app.route('/api/data', methods=['GET'])
+def get_data():
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT name, price, image_url FROM menu_items ORDER BY name ASC")
-        menu = [{"name": r[0], "price": float(r[1]), "image_url": r[2]} for r in cursor.fetchall()]
+        conn = get_db_connection()
+        cur = conn.cursor()
         
-        cursor.execute("SELECT name, price FROM toppings ORDER BY price ASC")
-        toppings = [{"name": r[0], "price": float(r[1])} for r in cursor.fetchall()]
+        # ดึงข้อมูลเมนูเครื่องดื่มทั้งหมด
+        cur.execute("SELECT * FROM drinks;")
+        drinks = cur.fetchall()
+        
+        # ดึงข้อมูลท็อปปิ้งทั้งหมด
+        cur.execute("SELECT * FROM toppings;")
+        toppings = cur.fetchall()
+        
+        cur.close()
         conn.close()
-        return jsonify({"menu": menu, "toppings": toppings})
+        
+        # แปลงข้อมูลให้แน่ใจว่าฟิลด์รูปภาพพร้อมใช้งาน
+        for d in drinks:
+            if 'image_url' in d and not d.get('image'):
+                d['image'] = d['image_url']
+                
+        return jsonify({
+            'drinks': drinks,
+            'toppings': toppings
+        })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Database error:", e)
+        # ถ้าเชื่อมต่อ DB ไม่ได้จริงๆ ให้ส่ง 500 error เพื่อให้หน้าเว็บรู้
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/order', methods=['POST'])
 def create_order():
     try:
         data = request.json
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO orders (table_number, items_json, total_price, status) VALUES (%s, %s, %s, %s)",
-            (data['table_number'], json.dumps(data['cart'], ensure_ascii=False), data['total_price'], 'pending')
-        )
+        table_no = data.get('table', 'กลับบ้าน')
+        order_date = data.get('date')
+        items = data.get('items', [])
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        for item in items:
+            drink_name = item.get('drink_name')
+            price = item.get('price', 0)
+            topping_name = item.get('topping_name', '')
+            topping_price = item.get('topping_price', 0)
+            total = item.get('total', 0)
+            
+            cur.execute("""
+                INSERT INTO orders (table_no, drink_name, price, topping_name, topping_price, total, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s);
+            """, (table_no, drink_name, price, topping_name, topping_price, total, order_date))
+            
         conn.commit()
+        cur.close()
         conn.close()
-        return jsonify({"success": True})
+        
+        return jsonify({'status': 'success'})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/')
-def home():
-    return render_template('index.html')
+        print("Order error:", e)
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=10000)
