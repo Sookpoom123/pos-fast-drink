@@ -10,9 +10,13 @@
 html,body{margin:0;padding:0;background:#F4EFEA;font-family:Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{padding:10px;padding-bottom:105px}
 button,input,label{touch-action:manipulation}
-.menu-card{background:#fff;border-radius:14px;border:1.5px solid #C8B2A2;overflow:hidden}
+.menu-card{background:#fff;border-radius:14px;border:1.5px solid #C8B2A2;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
 .menu-image{width:100%;height:110px;object-fit:contain;background:#fafafa;border-radius:10px}
 .topping-box{border:1px solid #ddd;border-radius:9px;background:#fafafa;overflow:hidden}
+.topping-list-container{max-height:140px;overflow-y:auto}
+/* Custom Scrollbar สำหรับกล่องท็อปปิ้ง */
+.topping-list-container::-webkit-scrollbar{width:4px}
+.topping-list-container::-webkit-scrollbar-thumb{background:#c8b2a2;border-radius:4px}
 .topping-item{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #eee;cursor:pointer}
 .topping-item:last-child{border-bottom:0}
 .topping-checkbox{width:20px;height:20px;flex-shrink:0}
@@ -22,8 +26,8 @@ button,input,label{touch-action:manipulation}
 .loading{text-align:center;padding:40px 10px;color:#777}
 @media (min-width:768px){
  body{padding:16px;padding-bottom:115px}
- .menu-image{height:150px}
- .topping-item{padding:9px 7px}
+ .menu-image{height:140px}
+ .topping-item{padding:8px 7px}
 }
 </style>
 </head>
@@ -53,7 +57,7 @@ button,input,label{touch-action:manipulation}
   <!-- ช่องค้นหาเมนู -->
   <div class="relative">
     <input id="searchInput" type="text" oninput="filterMenu()"
-           class="w-full p-3 pl-9 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
+           class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
            placeholder="🔍 ค้นหาเมนู..." autocomplete="off">
   </div>
 </div>
@@ -109,14 +113,18 @@ let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
-// 🤖 ระบบ Cache เก็บคำแปลทุกภาษาเพื่อไม่ต้องดึงซ้ำ
+// 🤖 ระบบ Cache เก็บคำแปลทุกภาษา
 const translationCache = {};
 
-// 📖 พจนานุกรมแปลสำรอง (คำเฉพาะ)
+// 📖 พจนานุกรมแปลสำรองสำหรับท็อปปิ้งและเมนู
 const itemDictionary = {
-  "ชาไทย": { en: "Thai Tea", zh: "泰式奶茶", my: "ထိုင်းလက်ဖက်ရည်" },
-  "ชาเขียว": { en: "Green Tea", zh: "绿茶", my: "လက်ဖက်စိမ်း" },
-  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบရာဏ ကော်ဖီ" }
+  "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "ပုလဲနက်" },
+  "ไข่มุกสีทอง": { en: "Golden Pearl", zh: "金珍珠", my: "ရွှေပုလဲ" },
+  "ฟรุ้ตสลัด": { en: "Fruit Salad", zh: "水果沙拉", my: "သစ်သီးသုပ်" },
+  "บุกนมสด": { en: "Fresh Milk Jelly", zh: "鲜奶魔芋", my: "နို့စိမ်းဂျယ်လီ" },
+  "บุกเฉาก๊วย": { en: "Grass Jelly", zh: "烧仙草", my: "ကျောက်ကျော" },
+  "บุกน้ำผึ้ง": { en: "Honey Jelly", zh: "蜂蜜魔芋", my: "ပျားရည်ဂျယ်လီ" },
+  "บุกบราวน์ชูการ์": { en: "Brown Sugar Jelly", zh: "黑糖魔芋", my: "ဂျယ်လီအညို" }
 };
 
 const translations = {
@@ -146,7 +154,7 @@ const translations = {
     title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
     customerPlaceholder:"请输入顾客姓名/号码", searchPlaceholder:"🔍 搜索饮料...", noTopping:"不加配料",
     selectTopping:"选择配料", selected:"已选择", order:"下单", total:"总价", item:"项",
-    confirm:"确认下单", loading:"正在加载菜单...", loadingError:"菜单加载失败",
+    confirm:"确认下单", loading:"กำลัง加载菜单...", loadingError:"菜单加载失败",
     enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
     success:"🎉 订单提交成功！", error:"订单提交失败", sending:"正在提交...",
     cartTitle:"🛒 已选商品", remove:"删除", clearAll:"🗑️ 清空",
@@ -175,7 +183,7 @@ async function batchTranslateTexts(texts, targetLang) {
   if (!texts.length || targetLang === "th") return {};
   
   const langCode = targetLang === "my" ? "my" : targetLang;
-  const missingTexts = texts.filter(t => !translationCache[`${t}_${langCode}`]);
+  const missingTexts = texts.filter(t => !translationCache[`${t}_${langCode}`] && !itemDictionary[t]?.[targetLang]);
   
   if (missingTexts.length > 0) {
     const combinedText = missingTexts.join(" ||| ");
@@ -184,7 +192,7 @@ async function batchTranslateTexts(texts, targetLang) {
       const response = await fetch(url);
       const result = await response.json();
       
-      if (result && result[0] && result[0][0] && result[0][0][0]) {
+      if (result && result[0]) {
         const fullTranslatedText = result[0].map(item => item[0]).join('');
         const translatedArray = fullTranslatedText.split("|||");
         
@@ -200,7 +208,7 @@ async function batchTranslateTexts(texts, targetLang) {
 
   const resultMap = {};
   texts.forEach(text => {
-    resultMap[text] = translationCache[`${text}_${langCode}`] || text;
+    resultMap[text] = itemDictionary[text]?.[targetLang] || translationCache[`${text}_${langCode}`] || text;
   });
   return resultMap;
 }
@@ -295,7 +303,6 @@ function renderMenu(){
     return;
   }
 
-  // กรองรายการเมนูตามคำค้นหา (ค้นหาทั้งชื่อภาษาไทยและชื่อภาษาที่เลือกอยู่)
   const filteredMenu = menuData.map((item, originalIndex) => ({ item, originalIndex }))
     .filter(({ item }) => {
       if(!keyword) return true;
@@ -318,7 +325,7 @@ function renderMenu(){
              <span>➕ ${escapeHTML(t("selectTopping"))}</span>
              <span id="topping-arrow-${menuIndex}" class="text-amber-700 text-sm font-normal">▼</span>
            </button>
-           <div id="topping-list-${menuIndex}" class="hidden border-t">
+           <div id="topping-list-${menuIndex}" class="hidden border-t topping-list-container">
              ${toppingData.map((top,topIndex)=>`
                <label class="topping-item">
                  <input type="checkbox" class="topping-checkbox"
@@ -332,16 +339,16 @@ function renderMenu(){
       : `<div class="text-xs text-gray-400 mt-2">${escapeHTML(t("noTopping"))}</div>`;
 
     return `
-      <div class="menu-card p-2 flex flex-col justify-between">
+      <div class="menu-card p-2">
         <div>
           <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
                class="menu-image" loading="lazy" alt="">
           <div class="mt-2">
-            <div id="menu-name-${menuIndex}" class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
+            <div id="menu-name-${menuIndex}" class="font-bold text-sm text-gray-800 line-clamp-1">${escapeHTML(getMenuName(item))}</div>
             <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
           </div>
           ${toppingsHTML}
-          <div id="selected-${menuIndex}" class="selected-count mt-2 min-h-[16px]"></div>
+          <div id="selected-${menuIndex}" class="selected-count mt-1.5 min-h-[16px]"></div>
         </div>
         <button onclick="addToCart(${menuIndex})"
                 class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-95 transition">
