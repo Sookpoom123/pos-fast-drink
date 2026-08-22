@@ -7,15 +7,7 @@ app = Flask(__name__)
 
 def get_db_connection():
     db_url = os.environ.get("DATABASE_URL")
-    # ปรับแต่ง URL ป้องกัน SSL Error
-    if db_url and db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-        
-    conn = psycopg2.connect(
-        db_url,
-        cursor_factory=RealDictCursor,
-        sslmode='require'
-    )
+    conn = psycopg2.connect(db_url)
     return conn
 
 @app.route('/')
@@ -26,7 +18,7 @@ def index():
 def get_data():
     try:
         conn = get_db_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         
         cur.execute("SELECT * FROM drinks;")
         drinks = cur.fetchall()
@@ -42,7 +34,7 @@ def get_data():
             'toppings': toppings
         })
     except Exception as e:
-        print("Database error:", str(e))
+        print("Database Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/order', methods=['POST'])
@@ -74,7 +66,7 @@ def create_order():
         
         return jsonify({'status': 'success'})
     except Exception as e:
-        print("Order error:", str(e))
+        print("Order Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
