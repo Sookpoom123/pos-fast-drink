@@ -14,7 +14,6 @@ button,input,label{touch-action:manipulation}
 .menu-image{width:100%;height:110px;object-fit:contain;background:#fafafa;border-radius:10px}
 .topping-box{border:1px solid #ddd;border-radius:9px;background:#fafafa;overflow:hidden}
 .topping-list-container{max-height:140px;overflow-y:auto}
-/* Custom Scrollbar สำหรับกล่องท็อปปิ้ง */
 .topping-list-container::-webkit-scrollbar{width:4px}
 .topping-list-container::-webkit-scrollbar-thumb{background:#c8b2a2;border-radius:4px}
 .topping-item{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #eee;cursor:pointer}
@@ -54,7 +53,6 @@ button,input,label{touch-action:manipulation}
          class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
          placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
 
-  <!-- ช่องค้นหาเมนู -->
   <div class="relative">
     <input id="searchInput" type="text" oninput="filterMenu()"
            class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
@@ -66,7 +64,6 @@ button,input,label{touch-action:manipulation}
   <div class="loading col-span-full">กำลังโหลดเมนู...</div>
 </div>
 
-<!-- แถบสรุปรายการด้านล่าง -->
 <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-40">
   <div class="max-w-7xl mx-auto flex justify-between items-center gap-3">
     <div onclick="openCartModal()" class="cursor-pointer flex-1">
@@ -83,7 +80,6 @@ button,input,label{touch-action:manipulation}
   </div>
 </div>
 
-<!-- Modal รายการสินค้าในตะกร้า -->
 <div id="cartModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
   <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col shadow-2xl">
     <div class="flex justify-between items-center pb-3 border-b">
@@ -113,10 +109,8 @@ let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
-// 🤖 ระบบ Cache เก็บคำแปลทุกภาษา
 const translationCache = {};
 
-// 📖 พจนานุกรมแปลสำรองสำหรับท็อปปิ้งและเมนู
 const itemDictionary = {
   "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "ပုလဲနက်" },
   "ไข่มุกสีทอง": { en: "Golden Pearl", zh: "金珍珠", my: "ရွှေပုလဲ" },
@@ -178,7 +172,6 @@ function t(key){
       || translations.th[key] || key;
 }
 
-// ⚡ แปลคำหลายๆ คำพร้อมกันในครั้งเดียว (Batch Translation)
 async function batchTranslateTexts(texts, targetLang) {
   if (!texts.length || targetLang === "th") return {};
   
@@ -532,13 +525,26 @@ async function submitOrder(){
   button.classList.add("opacity-60");
   document.getElementById("submitText").innerText=t("sending");
 
+  // แปลงโครงสร้าง cart ให้หลังบ้านนำไปแสดงผลชื่อรายการได้ตรงกัน
+  const formattedCart = cart.map(item => {
+    const toppingNames = item.toppings ? item.toppings.map(t => t.name).join(", ") : "";
+    const fullName = toppingNames ? `${item.menu_name} (+${toppingNames})` : item.menu_name;
+    
+    return {
+      name: fullName,
+      display_name: fullName,
+      price: item.total_price,
+      cost: item.price
+    };
+  });
+
   try{
     const response=await fetch("/api/order",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         table_number:tableNo,
-        cart:cart,
+        cart:formattedCart,
         total_price:total
       })
     });
