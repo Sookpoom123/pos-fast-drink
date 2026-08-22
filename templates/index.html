@@ -241,6 +241,9 @@
 
             cart.push({ name, price });
             updateCartUI();
+
+            // คืนค่า Dropdown ท็อปปิ้งเป็นค่าเริ่มต้นทันที
+            toppingSelect.value = "";
         }
 
         function removeFromCart(index) {
