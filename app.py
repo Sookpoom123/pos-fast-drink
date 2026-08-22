@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, render_template
 import psycopg2
 import os
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -10,7 +11,6 @@ DB_URL = os.environ.get("DATABASE_URL")
 def get_db():
     if not DB_URL:
         raise Exception("ไม่พบ DATABASE_URL")
-    # เพิ่ม sslmode='require' เพื่อให้เชื่อมต่อกับ Cloud Database ได้
     return psycopg2.connect(DB_URL, sslmode='require')
 
 @app.route("/api/init-data", methods=["GET"])
@@ -20,7 +20,6 @@ def get_init_data():
         conn = get_db()
         cursor = conn.cursor()
 
-        # ลองดึงแบบมีคอลัมน์หลายภาษา หากไม่มีใน DB ให้ Fallback ไปใช้ Query ปกติ
         try:
             cursor.execute("""
                 SELECT 
@@ -86,17 +85,36 @@ def create_order():
         table_number = str(data.get("table_number", "")).strip()
         cart = data.get("cart", [])
         total_price = float(data.get("total_price", 0))
+        order_date_str = data.get("order_date")  # รับค่าวันที่จากฝั่งสั่งอาหาร (รูปแบบ YYYY-MM-DD)
 
         if not table_number:
             return jsonify({"success": False, "error": "กรุณากรอกชื่อ/คิว"}), 400
         if not cart:
             return jsonify({"success": False, "error": "ยังไม่มีรายการสินค้า"}), 400
 
+        # จัดการเรื่องวันที่และเวลาบันทึก
+        current_time = datetime.now().time()
+        if order_date_str:
+            try:
+                selected_date = datetime.strptime(order_date_str, "%Y-%m-%d").date()
+                created_at = datetime.combine(selected_date, current_time)
+            except ValueError:
+                created_at = datetime.now()
+        else:
+            created_at = datetime.now()
+
         conn = get_db()
         cursor = conn.cursor()
+        
+        # คำนวณราคาทุนรวม (Cost)
+        total_cost = sum(float(item.get("cost", 0)) for item in cart)
+
         cursor.execute(
-            "INSERT INTO orders (table_number, items_json, total_price, status) VALUES (%s, %s, %s, %s)",
-            (table_number, json.dumps(cart, ensure_ascii=False), total_price, "pending")
+            """
+            INSERT INTO orders (table_number, items_json, total_price, total_cost, status, created_at) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (table_number, json.dumps(cart, ensure_ascii=False), total_price, total_cost, "pending", created_at)
         )
         conn.commit()
         cursor.close()
