@@ -102,35 +102,14 @@ let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
-// 📖 พจนานุกรมแปลชื่อเมนูและท็อปปิ้งทั้งหมด
+// 🤖 ระบบ Cache ความจำคำแปลของกูเกิล เพื่อไม่ต้องดึงซ้ำ
+const translationCache = {};
+
+// 📖 พจนานุกรมแปลแบบแมนนวล (สำรองไว้ใช้สำหรับคำเฉพาะ)
 const itemDictionary = {
-  // --- รายการเมนู ---
-  "กล้วยนมสด": { en: "Banana Fresh Milk", zh: "鲜奶香蕉", my: "ငှက်ပျောသီး နို့အေး" },
-  "กล้วยนมสดปั่น": { en: "Banana Milkshake", zh: "香蕉冰沙", my: "ငှက်ပျောသီး ဖျော်ရည်" },
-  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบရာဏ ကော်ဖီ" },
-  "โกโก้": { en: "Cocoa", zh: "可可", my: "ကိုကိုး" },
-  "โกโก้ปั่น": { en: "Cocoa Smoothie", zh: "可可冰沙", my: "ကိုကိုး ဖျော်ရည်" },
-  "โกโก้ลาวา": { en: "Cocoa Lava", zh: "熔岩可可", my: "ကိုကိုး လာဗာ" },
-  "คาราเมลนมสดปั่น": { en: "Caramel Milkshake", zh: "焦糖鲜奶冰沙", my: "ကာရာမဲလ် နို့အေးဖျော်ရည်" },
-  "แคนตาลูปนมสด": { en: "Cantaloupe Fresh Milk", zh: "哈密瓜鲜奶", my: "သခွားမွှေး နို့အေး" },
   "ชาไทย": { en: "Thai Tea", zh: "泰式奶茶", my: "ထိုင်းလက်ဖက်ရည်" },
   "ชาเขียว": { en: "Green Tea", zh: "绿茶", my: "လက်ဖက်စိမ်း" },
-  "นมสด": { en: "Fresh Milk", zh: "鲜牛奶", my: "နို့အေး" },
-  "ชาดำเย็น": { en: "Iced Black Tea", zh: "冰红茶", my: "ကြက်မောင်းအေး" },
-  "ชามะนาว": { en: "Lemon Tea", zh: "柠檬茶", my: "သံပုရာ လက်ဖက်ရည်" },
-  "นมชมพู": { en: "Pink Milk", zh: "粉红奶茶", my: "နို့ဆီအေး" },
-  "เผือกหอมนมสด": { en: "Taro Fresh Milk", zh: "香芋鲜奶", my: "เผือก นို့အေး" },
-  "ชาไทยปั่น": { en: "Thai Tea Smoothie", zh: "泰式奶茶冰沙", my: "ထိုင်းလက်ဖက်ရည် ဖျော်ရည်" },
-  "ชาเขียวปั่น": { en: "Green Tea Smoothie", zh: "绿茶冰沙", my: "လက်ဖက်စိမ်း ဖျော်ရည်" },
-  
-  // --- รายการท็อปปิ้ง ---
-  "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "အနက်ရောင် ပုလဲ" },
-  "ไข่มุกสีทอง": { en: "Gold Pearl", zh: "金珍珠", my: "ရွှေရောင် ပုလဲ" },
-  "ฟรุ้ตสลัด": { en: "Fruit Salad", zh: "水果沙拉", my: "သစ်သီး စုံ" },
-  "บุกนมสด": { en: "Milk Jelly", zh: "鲜奶椰果", my: "နို့ဂျယ်လီ" },
-  "บุกเฉาก๊วย": { en: "Grass Jelly", zh: "仙草", my: "ကျောက်ကျော" },
-  "บุกน้ำผึ้ง": { en: "Honey Jelly", zh: "蜂蜜椰果", my: "ပျားရည် ဂျယ်လီ" },
-  "บุกบราวน์ซูการ์": { en: "Brown Sugar Jelly", zh: "黑糖椰果", my: "ဘရောင်းရှူဂါ ဂျယ်လီ" }
+  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบရာဏ ကော်ဖီ" }
 };
 
 const translations = {
@@ -184,6 +163,32 @@ function t(key){
       || translations.th[key] || key;
 }
 
+// 🌐 ฟังก์ชันดึงคำแปลอัตโนมัติผ่าน Google Translate Free API
+async function autoTranslateText(text, targetLang) {
+  if (!text) return "";
+  if (targetLang === "th") return text;
+  
+  // แปลงโค้ดภาษาของพม่าให้ตรงตามรูปแบบ Google
+  const langCode = targetLang === "my" ? "my" : targetLang; 
+  const cacheKey = `${text}_${langCode}`;
+
+  if (translationCache[cacheKey]) return translationCache[cacheKey];
+
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetch(url);
+    const result = await response.json();
+    if (result && result[0] && result[0][0] && result[0][0][0]) {
+      const translated = result[0][0][0];
+      translationCache[cacheKey] = translated;
+      return translated;
+    }
+  } catch (e) {
+    console.warn("Auto translate error:", e);
+  }
+  return text;
+}
+
 function getMenuName(item){
   if(currentLanguage === "th") return item.name;
   if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
@@ -200,12 +205,47 @@ function getToppingName(item){
   return item[`name_${currentLanguage}`] || item.name;
 }
 
-function changeLanguage(language){
+async function changeLanguage(language){
   currentLanguage = language;
   localStorage.setItem("orderLanguage", language);
   updateLanguageButtons();
   updateStaticTexts();
   renderMenu();
+  
+  // สั่งให้ระบบแปลคำแปลใหม่อัตโนมัติทุกเมนูที่ไม่มีแปล
+  if(language !== "th") {
+    await translateAllItemsAuto();
+  }
+}
+
+async function translateAllItemsAuto() {
+  const targetLang = currentLanguage;
+  
+  // แปลเมนูทั้งหมด
+  for (let i = 0; i < menuData.length; i++) {
+    const item = menuData[i];
+    if (!itemDictionary[item.name] || !itemDictionary[item.name][targetLang]) {
+      const translated = await autoTranslateText(item.name, targetLang);
+      const elem = document.getElementById(`menu-name-${i}`);
+      if (elem && currentLanguage === targetLang) {
+        elem.innerText = translated;
+      }
+    }
+  }
+
+  // แปลท็อปปิ้งทั้งหมด
+  for (let mIdx = 0; mIdx < menuData.length; mIdx++) {
+    for (let tIdx = 0; tIdx < toppingData.length; tIdx++) {
+      const top = toppingData[tIdx];
+      if (!itemDictionary[top.name] || !itemDictionary[top.name][targetLang]) {
+        const translated = await autoTranslateText(top.name, targetLang);
+        const elem = document.getElementById(`topping-name-${mIdx}-${tIdx}`);
+        if (elem && currentLanguage === targetLang) {
+          elem.innerText = translated;
+        }
+      }
+    }
+  }
 }
 
 function updateLanguageButtons(){
@@ -237,6 +277,9 @@ async function loadInitData(){
     menuData=Array.isArray(data.menu) ? data.menu : [];
     toppingData=Array.isArray(data.toppings) ? data.toppings : [];
     renderMenu();
+    if(currentLanguage !== "th") {
+      translateAllItemsAuto();
+    }
   }catch(error){
     console.error(error);
     document.getElementById("menuContainer").innerHTML=
@@ -265,7 +308,7 @@ function renderMenu(){
                <label class="topping-item">
                  <input type="checkbox" class="topping-checkbox"
                         data-menu-index="${menuIndex}" data-topping-index="${topIndex}">
-                 <span class="text-xs flex-1">${escapeHTML(getToppingName(top))}</span>
+                 <span id="topping-name-${menuIndex}-${topIndex}" class="text-xs flex-1">${escapeHTML(getToppingName(top))}</span>
                  <span class="text-xs text-amber-700 whitespace-nowrap">+${formatPrice(top.price)} ฿</span>
                </label>
              `).join("")}
@@ -279,7 +322,7 @@ function renderMenu(){
           <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
                class="menu-image" loading="lazy" alt="">
           <div class="mt-2">
-            <div class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
+            <div id="menu-name-${menuIndex}" class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
             <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
           </div>
           ${toppingsHTML}
