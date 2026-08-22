@@ -45,10 +45,17 @@ button,input,label{touch-action:manipulation}
   </div>
 </div>
 
-<div class="mb-3">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
   <input id="tableNo" type="text" value="สั่งกลับบ้าน"
-         class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white"
+         class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
          placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
+
+  <!-- ช่องค้นหาเมนู -->
+  <div class="relative">
+    <input id="searchInput" type="text" oninput="filterMenu()"
+           class="w-full p-3 pl-9 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
+           placeholder="🔍 ค้นหาเมนู..." autocomplete="off">
+  </div>
 </div>
 
 <div id="menuContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -115,46 +122,46 @@ const itemDictionary = {
 const translations = {
   th:{
     title:"🧋 สั่งเครื่องดื่ม", subtitle:"สั่งกลับบ้าน", language:"ภาษา / Language",
-    customerPlaceholder:"ระบุชื่อลูกค้า/คิว", noTopping:"ไม่ใส่ท็อปปิ้ง",
+    customerPlaceholder:"ระบุชื่อลูกค้า/คิว", searchPlaceholder:"🔍 ค้นหาเมนู...", noTopping:"ไม่ใส่ท็อปปิ้ง",
     selectTopping:"เลือกท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
     item:"รายการ", confirm:"ยืนยันสั่งซื้อ", loading:"กำลังโหลดเมนู...",
     loadingError:"โหลดข้อมูลเมนูไม่สำเร็จ", enterCustomer:"กรุณากรอกชื่อ/คิว",
     emptyCart:"ยังไม่ได้เลือกรายการ", success:"🎉 ส่งออเดอร์เรียบร้อย!",
     error:"เกิดข้อผิดพลาดในการส่งออเดอร์", sending:"กำลังส่ง...",
     cartTitle:"🛒 รายการที่เลือก", remove:"ลบ", clearAll:"🗑️ ล้างทั้งหมด",
-    close:"ปิดหน้านี้", viewDelete:"(ดู/ลบ)"
+    close:"ปิดหน้านี้", viewDelete:"(ดู/ลบ)", noMenuFound:"ไม่พบเมนูที่ค้นหา"
   },
   my:{
     title:"🧋 အဖျော်ယမကာ မှာယူရန်", subtitle:"အိမ်ယူရန်", language:"ဘာသာစကား / Language",
-    customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", noTopping:"Topping မထည့်ပါ",
+    customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", searchPlaceholder:"🔍 မီနူး ရှာဖွေပါ...", noTopping:"Topping မထည့်ပါ",
     selectTopping:"Topping ရွေးမည်", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
     item:"รายการ", confirm:"အော်ဒါတင်မည်", loading:"မီနူးများ ဖွင့်နေသည်...",
     loadingError:"မီနူးဒေတာ ဖွင့်၍မရပါ", enterCustomer:"ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
     emptyCart:"ပစ္စည်းမရွေးရသေးပါ", success:"🎉 အော်ဒါတင်ပြီးပါပြီ!",
     error:"အော်ဒါပို့ရာတွင် အမှားဖြစ်နေပါသည်", sending:"ပို့နေသည်...",
     cartTitle:"🛒 ရွေးချယ်ထားသော ပစ္စည်းများ", remove:"ဖျက်မည်", clearAll:"🗑️ အားလုံးဖျက်မည်",
-    close:"ပိတ်မည်", viewDelete:"(ကြည့်/ဖျက်)"
+    close:"ပိတ်မည်", viewDelete:"(ကြည့်/ဖျက်)", noMenuFound:"မီနူး မတွေ့ပါ"
   },
   zh:{
     title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
-    customerPlaceholder:"请输入顾客姓名/号码", noTopping:"不加配料",
+    customerPlaceholder:"请输入顾客姓名/号码", searchPlaceholder:"🔍 搜索饮料...", noTopping:"不加配料",
     selectTopping:"选择配料", selected:"已选择", order:"下单", total:"总价", item:"项",
     confirm:"确认下单", loading:"正在加载菜单...", loadingError:"菜单加载失败",
     enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
     success:"🎉 订单提交成功！", error:"订单提交失败", sending:"正在提交...",
     cartTitle:"🛒 已选商品", remove:"删除", clearAll:"🗑️ 清空",
-    close:"关闭", viewDelete:"(查看/删除)"
+    close:"关闭", viewDelete:"(查看/删除)", noMenuFound:"未找到相关饮料"
   },
   en:{
     title:"🧋 Drink Order", subtitle:"Take Away", language:"Language",
-    customerPlaceholder:"Customer name / Queue", noTopping:"No toppings",
+    customerPlaceholder:"Customer name / Queue", searchPlaceholder:"🔍 Search menu...", noTopping:"No toppings",
     selectTopping:"Select Toppings", selected:"Selected", order:"Order", total:"Total",
     item:"items", confirm:"Confirm Order", loading:"Loading menu...",
     loadingError:"Unable to load menu", enterCustomer:"Please enter customer name / queue",
     emptyCart:"Please select an item", success:"🎉 Order submitted successfully!",
     error:"Failed to submit order", sending:"Sending...",
     cartTitle:"🛒 Selected Items", remove:"Delete", clearAll:"🗑️ Clear All",
-    close:"Close", viewDelete:"(View/Delete)"
+    close:"Close", viewDelete:"(View/Delete)", noMenuFound:"No menu found"
   }
 };
 
@@ -171,7 +178,6 @@ async function batchTranslateTexts(texts, targetLang) {
   const missingTexts = texts.filter(t => !translationCache[`${t}_${langCode}`]);
   
   if (missingTexts.length > 0) {
-    // รวมคำทั้งหมดเข้าด้วยกันโดยใช้สัญลักษณ์ตัวแบ่งพิเศษ " ||| "
     const combinedText = missingTexts.join(" ||| ");
     try {
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(combinedText)}`;
@@ -222,15 +228,12 @@ async function changeLanguage(language){
   updateStaticTexts();
   
   if(language !== "th") {
-    // รวบรวมข้อความชื่อเมนูและท็อปปิ้งทั้งหมดส่งแปลแบบก้อนเดียว
     const allTexts = [];
     menuData.forEach(m => allTexts.push(m.name));
     toppingData.forEach(t => allTexts.push(t.name));
-    
     await batchTranslateTexts(allTexts, language);
   }
   
-  // แสดงผลหน้าจอพร้อมกันทีเดียวทั้งหมด
   renderMenu();
 }
 
@@ -249,6 +252,7 @@ function updateStaticTexts(){
   document.getElementById("subtitleText").innerText=t("subtitle");
   document.getElementById("languageText").innerText=t("language");
   document.getElementById("tableNo").placeholder=t("customerPlaceholder");
+  document.getElementById("searchInput").placeholder=t("searchPlaceholder");
   document.getElementById("submitText").innerText=t("confirm");
   document.getElementById("cartModalTitle").innerText=t("cartTitle");
   updateCartUI();
@@ -278,15 +282,35 @@ async function loadInitData(){
   }
 }
 
+function filterMenu() {
+  renderMenu();
+}
+
 function renderMenu(){
   const container=document.getElementById("menuContainer");
+  const keyword = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
 
   if(!menuData.length){
     container.innerHTML=`<div class="col-span-full loading">${escapeHTML(t("loadingError"))}</div>`;
     return;
   }
 
-  container.innerHTML=menuData.map((item,menuIndex)=>{
+  // กรองรายการเมนูตามคำค้นหา (ค้นหาทั้งชื่อภาษาไทยและชื่อภาษาที่เลือกอยู่)
+  const filteredMenu = menuData.map((item, originalIndex) => ({ item, originalIndex }))
+    .filter(({ item }) => {
+      if(!keyword) return true;
+      const originalName = item.name.toLowerCase();
+      const translatedName = getMenuName(item).toLowerCase();
+      return originalName.includes(keyword) || translatedName.includes(keyword);
+    });
+
+  if(!filteredMenu.length){
+    container.innerHTML=`<div class="col-span-full text-center py-10 text-gray-500">${escapeHTML(t("noMenuFound"))}</div>`;
+    return;
+  }
+
+  container.innerHTML=filteredMenu.map(({ item, originalIndex })=>{
+    const menuIndex = originalIndex;
     const toppingsHTML=toppingData.length
       ? `<div class="topping-box mt-2">
            <button type="button" onclick="toggleTopping(${menuIndex})"
@@ -464,6 +488,7 @@ function resetAllForm(){
 
   const input=document.getElementById("tableNo");
   input.value=currentLanguage==="th" ? "สั่งกลับบ้าน" : "";
+  document.getElementById("searchInput").value = "";
 
   updateCartUI();
 }
