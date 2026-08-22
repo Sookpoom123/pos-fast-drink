@@ -83,7 +83,7 @@ const translations = {
   th:{
     title:"🧋 สั่งเครื่องดื่ม", subtitle:"สั่งกลับบ้าน", language:"ภาษา / Language",
     customerPlaceholder:"ระบุชื่อลูกค้า/คิว", noTopping:"ไม่ใส่ท็อปปิ้ง",
-    topping:"ท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
+    selectTopping:"เลือกท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
     item:"รายการ", confirm:"ยืนยันสั่งซื้อ", loading:"กำลังโหลดเมนู...",
     loadingError:"โหลดข้อมูลเมนูไม่สำเร็จ", enterCustomer:"กรุณากรอกชื่อ/คิว",
     emptyCart:"ยังไม่ได้เลือกรายการ", success:"🎉 ส่งออเดอร์เรียบร้อย!",
@@ -92,7 +92,7 @@ const translations = {
   my:{
     title:"🧋 အဖျော်ယမကာ မှာယူရန်", subtitle:"အိမ်ယူရန်", language:"ဘာသာစကား / Language",
     customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", noTopping:"Topping မထည့်ပါ",
-    topping:"Topping", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
+    selectTopping:"Topping ရွေးမည်", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
     item:"รายการ", confirm:"အော်ဒါတင်မည်", loading:"မီနူးများ ဖွင့်နေသည်...",
     loadingError:"မီနူးဒေတာ ဖွင့်၍မရပါ", enterCustomer:"ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
     emptyCart:"ပစ္စည်းမရွေးရသေးပါ", success:"🎉 အော်ဒါတင်ပြီးပါပြီ!",
@@ -101,7 +101,7 @@ const translations = {
   zh:{
     title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
     customerPlaceholder:"请输入顾客姓名/号码", noTopping:"不加配料",
-    topping:"配料", selected:"已选择", order:"下单", total:"总价", item:"项",
+    selectTopping:"选择配料", selected:"已选择", order:"下单", total:"总价", item:"项",
     confirm:"确认下单", loading:"正在加载菜单...", loadingError:"菜单加载失败",
     enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
     success:"🎉 订单提交成功！", error:"订单提交失败", sending:"正在提交..."
@@ -109,7 +109,7 @@ const translations = {
   en:{
     title:"🧋 Drink Order", subtitle:"Take Away", language:"Language",
     customerPlaceholder:"Customer name / Queue", noTopping:"No toppings",
-    topping:"Toppings", selected:"Selected", order:"Order", total:"Total",
+    selectTopping:"Select Toppings", selected:"Selected", order:"Order", total:"Total",
     item:"items", confirm:"Confirm Order", loading:"Loading menu...",
     loadingError:"Unable to load menu", enterCustomer:"Please enter customer name / queue",
     emptyCart:"Please select an item", success:"🎉 Order submitted successfully!",
@@ -190,8 +190,12 @@ function renderMenu(){
   container.innerHTML=menuData.map((item,menuIndex)=>{
     const toppingsHTML=toppingData.length
       ? `<div class="topping-box mt-2">
-           <div class="text-xs font-bold text-amber-800 p-2 border-b">${escapeHTML(t("topping"))}</div>
-           <div>
+           <button type="button" onclick="toggleTopping(${menuIndex})"
+                   class="w-full text-xs font-bold text-amber-800 p-2 text-left flex justify-between items-center bg-amber-50 hover:bg-amber-100 transition">
+             <span>➕ ${escapeHTML(t("selectTopping"))}</span>
+             <span id="topping-arrow-${menuIndex}" class="text-amber-700 text-sm font-normal">▼</span>
+           </button>
+           <div id="topping-list-${menuIndex}" class="hidden border-t">
              ${toppingData.map((top,topIndex)=>`
                <label class="topping-item">
                  <input type="checkbox" class="topping-checkbox"
@@ -205,15 +209,17 @@ function renderMenu(){
       : `<div class="text-xs text-gray-400 mt-2">${escapeHTML(t("noTopping"))}</div>`;
 
     return `
-      <div class="menu-card p-2 flex flex-col">
-        <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
-             class="menu-image" loading="lazy" alt="">
-        <div class="mt-2">
-          <div class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
-          <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
+      <div class="menu-card p-2 flex flex-col justify-between">
+        <div>
+          <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
+               class="menu-image" loading="lazy" alt="">
+          <div class="mt-2">
+            <div class="font-bold text-sm text-gray-800">${escapeHTML(getMenuName(item))}</div>
+            <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
+          </div>
+          ${toppingsHTML}
+          <div id="selected-${menuIndex}" class="selected-count mt-2 min-h-[16px]"></div>
         </div>
-        ${toppingsHTML}
-        <div id="selected-${menuIndex}" class="selected-count mt-2 min-h-[16px]"></div>
         <button onclick="addToCart(${menuIndex})"
                 class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-95 transition">
           ➕ ${escapeHTML(t("order"))}
@@ -224,6 +230,20 @@ function renderMenu(){
   container.querySelectorAll(".topping-checkbox").forEach(cb=>{
     cb.addEventListener("change",updateSelectedCount);
   });
+}
+
+function toggleTopping(menuIndex){
+  const list = document.getElementById(`topping-list-${menuIndex}`);
+  const arrow = document.getElementById(`topping-arrow-${menuIndex}`);
+  if(!list) return;
+
+  if(list.classList.contains("hidden")){
+    list.classList.remove("hidden");
+    if(arrow) arrow.innerText = "▲";
+  } else {
+    list.classList.add("hidden");
+    if(arrow) arrow.innerText = "▼";
+  }
 }
 
 function updateSelectedCount(event){
@@ -278,12 +298,24 @@ function resetToppingsForMenu(menuIndex){
   document.querySelectorAll(`input[data-menu-index="${menuIndex}"]`).forEach(cb=>cb.checked=false);
   const display=document.getElementById(`selected-${menuIndex}`);
   if(display) display.innerText="";
+
+  const list = document.getElementById(`topping-list-${menuIndex}`);
+  const arrow = document.getElementById(`topping-arrow-${menuIndex}`);
+  if(list) list.classList.add("hidden");
+  if(arrow) arrow.innerText = "▼";
 }
 
 function resetAllForm(){
   cart=[];
   document.querySelectorAll(".topping-checkbox").forEach(cb=>cb.checked=false);
   document.querySelectorAll(".selected-count").forEach(el=>el.innerText="");
+
+  menuData.forEach((_, idx) => {
+    const list = document.getElementById(`topping-list-${idx}`);
+    const arrow = document.getElementById(`topping-arrow-${idx}`);
+    if(list) list.classList.add("hidden");
+    if(arrow) arrow.innerText = "▼";
+  });
 
   const input=document.getElementById("tableNo");
   input.value=currentLanguage==="th" ? "สั่งกลับบ้าน" : "";
