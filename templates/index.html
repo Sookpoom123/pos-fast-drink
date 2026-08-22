@@ -1,329 +1,698 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>🧋 Order Drinks</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-        body { background-color: #F4EFEA; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
-        .card { background: white; border-radius: 12px; border: 1.5px solid #C8B2A2; }
+        body {
+            background-color: #F4EFEA;
+            font-family: system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1.5px solid #C8B2A2;
+        }
     </style>
 </head>
+
+
 <body class="p-3">
 
-    <!-- แถบเลือกภาษา -->
+    <!-- =====================================================
+         แถบเลือกภาษา
+    ====================================================== -->
+
     <div class="flex justify-end gap-1 mb-2">
-        <button onclick="changeLang('th')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇹🇭 TH</button>
-        <button onclick="changeLang('en')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇬🇧 EN</button>
-        <button onclick="changeLang('zh')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇨🇳 ZH</button>
-        <button onclick="changeLang('my')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300">🇲🇲 MY</button>
+
+        <button
+            onclick="changeLang('th')"
+            class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300"
+        >
+            🇹🇭 TH
+        </button>
+
+        <button
+            onclick="changeLang('en')"
+            class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300"
+        >
+            🇬🇧 EN
+        </button>
+
+        <button
+            onclick="changeLang('zh')"
+            class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300"
+        >
+            🇨🇳 ZH
+        </button>
+
+        <button
+            onclick="changeLang('my')"
+            class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-xs font-bold border border-amber-300"
+        >
+            🇲🇲 MY
+        </button>
+
     </div>
 
-    <!-- หัวข้อ -->
-    <div id="ui-title" class="bg-amber-800 text-white p-3 rounded-lg text-center font-bold mb-3 shadow">
+
+    <!-- =====================================================
+         หัวข้อ
+    ====================================================== -->
+
+    <div
+        id="ui-title"
+        class="bg-amber-800 text-white p-3 rounded-lg text-center font-bold mb-3 shadow"
+    >
         🧋 สั่งเครื่องดื่ม (กลับบ้าน)
     </div>
 
-    <!-- ช่องระบุชื่อ/คิว -->
+
+    <!-- =====================================================
+         ช่องระบุชื่อ / คิว
+    ====================================================== -->
+
     <div class="mb-3">
-        <input id="tableNo" type="text" value="สั่งกลับบ้าน" class="w-full p-2 border border-amber-300 rounded-lg text-sm">
+
+        <input
+            id="tableNo"
+            type="text"
+            value="สั่งกลับบ้าน"
+            class="w-full p-2 border border-amber-300 rounded-lg text-sm"
+        >
+
     </div>
 
-    <!-- รายการเมนู -->
-    <div id="menuContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-28"></div>
 
-    <!-- แถบสรุปออเดอร์ด้านล่าง -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-40">
+    <!-- =====================================================
+         รายการเมนู
+    ====================================================== -->
+
+    <div
+        id="menuContainer"
+        class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-28"
+    ></div>
+
+
+    <!-- =====================================================
+         แถบสรุปออเดอร์ด้านล่าง
+    ====================================================== -->
+
+    <div
+        class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-40"
+    >
+
         <div class="flex justify-between items-center mb-2">
+
             <div>
-                <div class="text-xs text-gray-500"><span id="ui-total-label">ราคารวม</span> (<span id="cartCount">0</span> <span id="ui-item-label">รายการ</span>)</div>
-                <div class="text-xl font-bold text-amber-900"><span id="cartTotal">0</span> ฿</div>
+
+                <div class="text-xs text-gray-500">
+
+                    <span id="ui-total-label">
+                        ราคารวม
+                    </span>
+
+                    (
+
+                    <span id="cartCount">
+                        0
+                    </span>
+
+                    <span id="ui-item-label">
+                        รายการ
+                    </span>
+
+                    )
+
+                </div>
+
+                <div class="text-xl font-bold text-amber-900">
+
+                    <span id="cartTotal">
+                        0
+                    </span>
+
+                    ฿
+
+                </div>
+
             </div>
-            
+
+
             <div class="flex gap-2">
-                <button id="ui-view-cart-btn" onclick="openCartModal()" class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-lg text-xs font-bold hover:bg-amber-200 active:scale-95 transition">
+
+                <!-- ดูตะกร้า -->
+
+                <button
+                    id="ui-view-cart-btn"
+                    onclick="openCartModal()"
+                    class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-lg text-xs font-bold hover:bg-amber-200 active:scale-95 transition"
+                >
                     🛒 รายการสินค้า
                 </button>
-                <button id="ui-submit-btn" onclick="submitOrder()" class="bg-amber-800 text-white px-5 py-2 rounded-lg font-bold hover:bg-amber-900 active:scale-95 transition text-sm">
+
+
+                <!-- ยืนยันสั่งซื้อ -->
+
+                <button
+                    id="ui-submit-btn"
+                    onclick="submitOrder()"
+                    class="bg-amber-800 text-white px-5 py-2 rounded-lg font-bold hover:bg-amber-900 active:scale-95 transition text-sm"
+                >
                     🚀 ยืนยันสั่งซื้อ
                 </button>
+
             </div>
+
         </div>
+
     </div>
 
-    <!-- Modal ป๊อปอัปดู/ลบรายการสินค้าในตะกร้า -->
-    <div id="cartModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-md rounded-xl p-4 shadow-2xl flex flex-col max-h-[80vh]">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 id="ui-modal-title" class="font-bold text-amber-900 text-lg">🛒 รายการในตะกร้า</h3>
-                <button onclick="closeCartModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl px-2">&times;</button>
+
+    <!-- =====================================================
+         Modal ตะกร้า
+    ====================================================== -->
+
+    <div
+        id="cartModal"
+        class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden"
+    >
+
+        <div
+            class="bg-white w-full max-w-md rounded-xl p-4 shadow-2xl flex flex-col max-h-[80vh]"
+        >
+
+            <!-- หัว Modal -->
+
+            <div
+                class="flex justify-between items-center border-b pb-2 mb-3"
+            >
+
+                <h3
+                    id="ui-modal-title"
+                    class="font-bold text-amber-900 text-lg"
+                >
+                    🛒 รายการในตะกร้า
+                </h3>
+
+                <button
+                    onclick="closeCartModal()"
+                    class="text-gray-400 hover:text-gray-600 font-bold text-xl px-2"
+                >
+                    &times;
+                </button>
+
             </div>
 
-            <div id="cartItemsList" class="flex-1 overflow-y-auto divide-y divide-gray-100 my-2"></div>
 
-            <div class="border-t pt-3 mt-2 flex justify-between items-center">
-                <button id="ui-clear-all-btn" onclick="clearCart()" class="text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-bold transition">
+            <!-- รายการในตะกร้า -->
+
+            <div
+                id="cartItemsList"
+                class="flex-1 overflow-y-auto divide-y divide-gray-100 my-2"
+            ></div>
+
+
+            <!-- ปุ่มด้านล่าง -->
+
+            <div
+                class="border-t pt-3 mt-2 flex justify-between items-center"
+            >
+
+                <button
+                    id="ui-clear-all-btn"
+                    onclick="clearCart()"
+                    class="text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-bold transition"
+                >
                     🗑️ ล้างทั้งหมด
                 </button>
-                <button id="ui-close-modal-btn" onclick="closeCartModal()" class="bg-amber-800 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-amber-900 transition">
+
+
+                <button
+                    id="ui-close-modal-btn"
+                    onclick="closeCartModal()"
+                    class="bg-amber-800 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-amber-900 transition"
+                >
                     ปิด
                 </button>
+
             </div>
+
         </div>
+
     </div>
 
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
     <script>
+
+        // =====================================================
+        // ระบบภาษา
+        // =====================================================
+
         const i18n = {
+
             th: {
+
                 title: '🧋 สั่งเครื่องดื่ม (กลับบ้าน)',
-                tablePlaceholder: 'ระบุชื่อลูกค้า/คิว',
-                tableDefault: 'สั่งกลับบ้าน',
-                noTopping: '-- ไม่ใส่ท็อปปิ้ง --',
-                addBtn: '➕ สั่ง',
-                totalLabel: 'ราคารวม',
-                itemLabel: 'รายการ',
-                submitBtn: '🚀 ยืนยันสั่งซื้อ',
-                viewCartBtn: '🛒 รายการสินค้า',
-                modalTitle: '🛒 รายการในตะกร้า',
-                clearAllBtn: '🗑️ ล้างทั้งหมด',
-                closeBtn: 'ปิด',
-                emptyCartText: 'ไม่มีสินค้าในตะกร้า',
-                errLoad: 'โหลดข้อมูลเมนูไม่สำเร็จ',
-                alertName: 'กรุณากรอกชื่อ/คิว',
-                alertEmpty: 'ยังไม่ได้เลือกรายการ',
-                alertSuccess: '🎉 ส่งออเดอร์เรียบร้อย!',
-                alertErr: 'เกิดข้อผิดพลาดในการส่งออเดอร์'
+
+                tablePlaceholder:
+                    'ระบุชื่อลูกค้า/คิว',
+
+                tableDefault:
+                    'สั่งกลับบ้าน',
+
+                noTopping:
+                    '-- ไม่ใส่ท็อปปิ้ง --',
+
+                addBtn:
+                    '➕ สั่ง',
+
+                totalLabel:
+                    'ราคารวม',
+
+                itemLabel:
+                    'รายการ',
+
+                submitBtn:
+                    '🚀 ยืนยันสั่งซื้อ',
+
+                viewCartBtn:
+                    '🛒 รายการสินค้า',
+
+                modalTitle:
+                    '🛒 รายการในตะกร้า',
+
+                clearAllBtn:
+                    '🗑️ ล้างทั้งหมด',
+
+                closeBtn:
+                    'ปิด',
+
+                emptyCartText:
+                    'ไม่มีสินค้าในตะกร้า',
+
+                errLoad:
+                    'โหลดข้อมูลเมนูไม่สำเร็จ',
+
+                alertName:
+                    'กรุณากรอกชื่อ/คิว',
+
+                alertEmpty:
+                    'ยังไม่ได้เลือกรายการ',
+
+                alertSuccess:
+                    '🎉 ส่งออเดอร์เรียบร้อย!',
+
+                alertErr:
+                    'เกิดข้อผิดพลาดในการส่งออเดอร์'
+
             },
+
+
             en: {
-                title: '🧋 Order Drinks (Takeaway)',
-                tablePlaceholder: 'Customer Name / Queue',
-                tableDefault: 'Takeaway',
-                noTopping: '-- No Topping --',
-                addBtn: '➕ Add',
-                totalLabel: 'Total',
-                itemLabel: 'items',
-                submitBtn: '🚀 Confirm Order',
-                viewCartBtn: '🛒 View Cart',
-                modalTitle: '🛒 Cart Items',
-                clearAllBtn: '🗑️ Clear All',
-                closeBtn: 'Close',
-                emptyCartText: 'Cart is empty',
-                errLoad: 'Failed to load menu data',
-                alertName: 'Please enter name/queue',
-                alertEmpty: 'Cart is empty',
-                alertSuccess: '🎉 Order submitted!',
-                alertErr: 'Order submission failed'
+
+                title:
+                    '🧋 Order Drinks (Takeaway)',
+
+                tablePlaceholder:
+                    'Customer Name / Queue',
+
+                tableDefault:
+                    'Takeaway',
+
+                noTopping:
+                    '-- No Topping --',
+
+                addBtn:
+                    '➕ Add',
+
+                totalLabel:
+                    'Total',
+
+                itemLabel:
+                    'items',
+
+                submitBtn:
+                    '🚀 Confirm Order',
+
+                viewCartBtn:
+                    '🛒 View Cart',
+
+                modalTitle:
+                    '🛒 Cart Items',
+
+                clearAllBtn:
+                    '🗑️ Clear All',
+
+                closeBtn:
+                    'Close',
+
+                emptyCartText:
+                    'Cart is empty',
+
+                errLoad:
+                    'Failed to load menu data',
+
+                alertName:
+                    'Please enter name/queue',
+
+                alertEmpty:
+                    'Cart is empty',
+
+                alertSuccess:
+                    '🎉 Order submitted!',
+
+                alertErr:
+                    'Order submission failed'
+
             },
+
+
             zh: {
-                title: '🧋 订购饮料 (外带)',
-                tablePlaceholder: '顾客姓名 / 取餐号',
-                tableDefault: '外带',
-                noTopping: '-- 不加配料 --',
-                addBtn: '➕ 点餐',
-                totalLabel: '总计',
-                itemLabel: '项',
-                submitBtn: '🚀 确认下单',
-                viewCartBtn: '🛒 购物车',
-                modalTitle: '🛒 购物车列表',
-                clearAllBtn: '🗑️ 清空',
-                closeBtn: '关闭',
-                emptyCartText: '购物车为空',
-                errLoad: '加载菜单失败',
-                alertName: '请输入姓名或取餐号',
-                alertEmpty: '购物车为空',
-                alertSuccess: '🎉 下单成功！',
-                alertErr: '下单发生错误'
+
+                title:
+                    '🧋 订购饮料 (外带)',
+
+                tablePlaceholder:
+                    '顾客姓名 / 取餐号',
+
+                tableDefault:
+                    '外带',
+
+                noTopping:
+                    '-- 不加配料 --',
+
+                addBtn:
+                    '➕ 点餐',
+
+                totalLabel:
+                    '总计',
+
+                itemLabel:
+                    '项',
+
+                submitBtn:
+                    '🚀 确认下单',
+
+                viewCartBtn:
+                    '🛒 购物车',
+
+                modalTitle:
+                    '🛒 购物车列表',
+
+                clearAllBtn:
+                    '🗑️ 清空',
+
+                closeBtn:
+                    '关闭',
+
+                emptyCartText:
+                    '购物车为空',
+
+                errLoad:
+                    '加载菜单失败',
+
+                alertName:
+                    '请输入姓名或取餐号',
+
+                alertEmpty:
+                    '购物车为空',
+
+                alertSuccess:
+                    '🎉 下单成功！',
+
+                alertErr:
+                    '下单发生错误'
+
             },
+
+
             my: {
-                title: '🧋 အဖျော်ယမကာ မှာယူရန် (ပါဆယ်)',
-                tablePlaceholder: 'အမည် / ကျူးနံပါတ်',
-                tableDefault: 'ပါဆယ်',
-                noTopping: '-- တော့ပင်း မယူပါ --',
-                addBtn: '➕ မှာမည်',
-                totalLabel: 'စုစုပေါင်း',
-                itemLabel: 'ခု',
-                submitBtn: '🚀 အတည်ပြုမည်',
-                viewCartBtn: '🛒 ဈေးဝယ်ခြင်း',
-                modalTitle: '🛒 မှာယူထားသော စာရင်း',
-                clearAllBtn: '🗑️ အားလုံးဖျက်မည်',
-                closeBtn: 'ပိတ်မည်',
-                emptyCartText: 'ပစ္စည်း မရှိသေးပါ',
-                errLoad: 'မမီနူး ဒေတာ ရယူ၍ မရပါ',
-                alertName: 'ကျေးဇူးပြု၍ အမည်ဖြည့်ပါ',
-                alertEmpty: 'ပစ္စည်း မရွေးရသေးပါ',
-                alertSuccess: '🎉 မှာယူမှု အောင်မြင်ပါသည်!',
-                alertErr: 'မှာယူမှု မအောင်မြင်ပါ'
+
+                title:
+                    '🧋 အဖျော်ယမကာ မှာယူရန် (ပါဆယ်)',
+
+                tablePlaceholder:
+                    'အမည် / ကျူးနံပါတ်',
+
+                tableDefault:
+                    'ပါဆယ်',
+
+                noTopping:
+                    '-- တော့ပင်း မယူပါ --',
+
+                addBtn:
+                    '➕ မှာမည်',
+
+                totalLabel:
+                    'စုစုပေါင်း',
+
+                itemLabel:
+                    'ခု',
+
+                submitBtn:
+                    '🚀 အတည်ပြုမည်',
+
+                viewCartBtn:
+                    '🛒 ဈေးဝယ်ခြင်း',
+
+                modalTitle:
+                    '🛒 မှာယူထားသော စာရင်း',
+
+                clearAllBtn:
+                    '🗑️ အားလုံးဖျက်မည်',
+
+                closeBtn:
+                    'ပိတ်မည်',
+
+                emptyCartText:
+                    'ပစ္စည်း မရှိသေးပါ',
+
+                errLoad:
+                    'မီနူး ဒေတာ ရယူ၍ မရပါ',
+
+                alertName:
+                    'ကျေးဇူးပြု၍ အမည်ဖြည့်ပါ',
+
+                alertEmpty:
+                    'ပစ္စည်း မရွေးရသေးပါ',
+
+                alertSuccess:
+                    '🎉 မှာယူမှု အောင်မြင်ပါသည်!',
+
+                alertErr:
+                    'မှာယူမှု မအောင်မြင်ပါ'
+
             }
+
         };
 
+
+        // =====================================================
+        // ตัวแปรระบบ
+        // =====================================================
+
         let currentLang = 'th';
+
         let menuData = [];
+
         let toppingData = [];
+
         let cart = [];
 
+
+        // =====================================================
+        // เปลี่ยนภาษา
+        // =====================================================
+
         function changeLang(lang) {
+
             currentLang = lang;
+
             const t = i18n[lang];
 
-            document.getElementById('ui-title').innerText = t.title;
-            const tableInput = document.getElementById('tableNo');
-            tableInput.placeholder = t.tablePlaceholder;
-            
-            if (Object.values(i18n).some(item => item.tableDefault === tableInput.value)) {
-                tableInput.value = t.tableDefault;
+            document.getElementById('ui-title').innerText =
+                t.title;
+
+
+            const tableInput =
+                document.getElementById('tableNo');
+
+
+            tableInput.placeholder =
+                t.tablePlaceholder;
+
+
+            // ถ้าเป็นค่า Default ของภาษาเดิม
+            // ให้เปลี่ยนเป็น Default ของภาษาใหม่
+
+            if (
+                Object.values(i18n).some(
+                    item =>
+                        item.tableDefault === tableInput.value
+                )
+            ) {
+
+                tableInput.value =
+                    t.tableDefault;
+
             }
 
-            document.getElementById('ui-total-label').innerText = t.totalLabel;
-            document.getElementById('ui-item-label').innerText = t.itemLabel;
-            document.getElementById('ui-submit-btn').innerText = t.submitBtn;
-            document.getElementById('ui-view-cart-btn').innerText = t.viewCartBtn;
-            document.getElementById('ui-modal-title').innerText = t.modalTitle;
-            document.getElementById('ui-clear-all-btn').innerText = t.clearAllBtn;
-            document.getElementById('ui-close-modal-btn').innerText = t.closeBtn;
 
-            if (menuData.length > 0) renderMenu();
+            document.getElementById(
+                'ui-total-label'
+            ).innerText =
+                t.totalLabel;
+
+
+            document.getElementById(
+                'ui-item-label'
+            ).innerText =
+                t.itemLabel;
+
+
+            document.getElementById(
+                'ui-submit-btn'
+            ).innerText =
+                t.submitBtn;
+
+
+            document.getElementById(
+                'ui-view-cart-btn'
+            ).innerText =
+                t.viewCartBtn;
+
+
+            document.getElementById(
+                'ui-modal-title'
+            ).innerText =
+                t.modalTitle;
+
+
+            document.getElementById(
+                'ui-clear-all-btn'
+            ).innerText =
+                t.clearAllBtn;
+
+
+            document.getElementById(
+                'ui-close-modal-btn'
+            ).innerText =
+                t.closeBtn;
+
+
+            if (menuData.length > 0) {
+
+                renderMenu();
+
+            }
+
+
             renderCartModal();
+
         }
+
+
+        // =====================================================
+        // โหลดข้อมูลจาก Database
+        // =====================================================
 
         async function loadInitData() {
+
             try {
-                const res = await fetch('/api/init-data');
-                const data = await res.json();
-                menuData = data.menu || [];
-                toppingData = data.toppings || [];
+
+                const res =
+                    await fetch('/api/init-data');
+
+
+                if (!res.ok) {
+
+                    throw new Error(
+                        'โหลดข้อมูลไม่สำเร็จ'
+                    );
+
+                }
+
+
+                const data =
+                    await res.json();
+
+
+                menuData =
+                    data.menu || [];
+
+
+                toppingData =
+                    data.toppings || [];
+
+
                 renderMenu();
-            } catch (err) {
-                alert(i18n[currentLang].errLoad);
+
             }
+
+            catch (err) {
+
+                console.error(err);
+
+                alert(
+                    i18n[currentLang].errLoad
+                );
+
+            }
+
         }
+
+
+        // =====================================================
+        // แสดงเมนู
+        // =====================================================
 
         function renderMenu() {
-            const container = document.getElementById('menuContainer');
-            const t = i18n[currentLang];
 
-            if (!menuData || menuData.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">ไม่มีข้อมูลเมนู</div>`;
-                return;
-            }
+            const container =
+                document.getElementById(
+                    'menuContainer'
+                );
 
-            container.innerHTML = menuData.map((item, idx) => `
-                <div class="card p-2 text-center flex flex-col justify-between shadow-sm">
-                    <div>
-                        <img src="${item.image_url || 'https://via.placeholder.com/100'}" class="h-24 w-full object-contain mb-1 rounded">
-                        <div class="font-bold text-sm text-gray-800">${item.name}</div>
-                        <div class="text-amber-800 font-extrabold text-sm">${item.price} ฿</div>
+
+            const t =
+                i18n[currentLang];
+
+
+            if (
+                !menuData ||
+                menuData.length === 0
+            ) {
+
+                container.innerHTML = `
+                    <div class="col-span-full text-center text-gray-500 py-10">
+                        ไม่มีข้อมูลเมนู
                     </div>
-                    
-                    <select id="topping-${idx}" class="w-full text-xs p-1 border rounded mt-2 bg-gray-50">
-                        <option value="">${t.noTopping}</option>
-                        ${toppingData.map(top => `<option value="${top.name}|${top.price}">${top.name} (+${top.price}฿)</option>`).join('')}
-                    </select>
+                `;
 
-                    <button onclick="addToCart(${idx})" class="w-full bg-amber-800 text-white text-xs font-bold py-2 rounded mt-2 active:bg-amber-900 active:scale-95 transition">
-                        ${t.addBtn}
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function addToCart(menuIdx) {
-            const item = menuData[menuIdx];
-            const toppingSelect = document.getElementById(`topping-${menuIdx}`);
-            let price = item.price;
-            let name = item.name;
-
-            if (toppingSelect.value) {
-                const [topName, topPrice] = toppingSelect.value.split('|');
-                price += parseFloat(topPrice);
-                name += ` (+${topName})`;
-            }
-
-            cart.push({ name, price });
-            updateCartUI();
-
-            // คืนค่า Dropdown ท็อปปิ้งเป็นค่าเริ่มต้นทันที
-            toppingSelect.value = "";
-        }
-
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCartUI();
-            renderCartModal();
-        }
-
-        function clearCart() {
-            cart = [];
-            updateCartUI();
-            renderCartModal();
-            closeCartModal();
-        }
-
-        function updateCartUI() {
-            document.getElementById('cartCount').innerText = cart.length;
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            document.getElementById('cartTotal').innerText = total;
-        }
-
-        function openCartModal() {
-            renderCartModal();
-            document.getElementById('cartModal').classList.remove('hidden');
-        }
-
-        function closeCartModal() {
-            document.getElementById('cartModal').classList.add('hidden');
-        }
-
-        function renderCartModal() {
-            const listContainer = document.getElementById('cartItemsList');
-            const t = i18n[currentLang];
-
-            if (cart.length === 0) {
-                listContainer.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">${t.emptyCartText}</div>`;
                 return;
+
             }
 
-            listContainer.innerHTML = cart.map((item, idx) => `
-                <div class="flex justify-between items-center py-2">
-                    <div class="pr-2 text-left">
-                        <div class="font-bold text-sm text-gray-800">${item.name}</div>
-                        <div class="text-xs text-amber-800 font-semibold">${item.price} ฿</div>
-                    </div>
-                    <button onclick="removeFromCart(${idx})" class="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-xs font-bold transition">
-                        ❌
-                    </button>
-                </div>
-            `).join('');
-        }
 
-        async function submitOrder() {
-            const t = i18n[currentLang];
-            const tableNo = document.getElementById('tableNo').value;
-            
-            if (!tableNo.trim()) return alert(t.alertName);
-            if (cart.length === 0) return alert(t.alertEmpty);
+            container.innerHTML =
+                menuData.map(
+                    (item, idx) => `
 
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-
-            try {
-                const res = await fetch('/api/order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ table_number: tableNo, cart: cart, total_price: total })
-                });
-
-                if (res.ok) {
-                    alert(t.alertSuccess);
-                    cart = [];
-                    updateCartUI();
-                    closeCartModal();
-                }
-            } catch (err) {
-                alert(t.alertErr);
-            }
-        }
-
-        loadInitData();
-    </script>
-</body>
-</html>
+                    <div
