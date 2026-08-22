@@ -80,9 +80,7 @@ button,input,label{touch-action:manipulation}
       <button onclick="closeCartModal()" class="text-gray-400 text-2xl font-bold hover:text-gray-600 px-2">&times;</button>
     </div>
     
-    <div id="cartItemsList" class="overflow-y-auto my-3 flex-1 divide-y">
-      <!-- แสดงรายการสินค้าที่เลือกไว้ -->
-    </div>
+    <div id="cartItemsList" class="overflow-y-auto my-3 flex-1 divide-y"></div>
 
     <div class="pt-3 border-t flex gap-2">
       <button onclick="clearCart()" class="w-1/3 bg-red-100 text-red-700 font-bold py-2.5 rounded-xl text-sm hover:bg-red-200">
@@ -103,6 +101,27 @@ let toppingData = [];
 let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
+
+// 📖 พจนานุกรมแปลชื่อเมนูและท็อปปิ้งใน HTML
+const itemDictionary = {
+  // --- ชื่อเมนู ---
+  "กล้วยนมสด": { en: "Banana Fresh Milk", zh: "鲜奶香蕉", my: "ငှက်ပျောသီး နို့အေး" },
+  "กล้วยนมสดปั่น": { en: "Banana Milkshake", zh: "香蕉冰沙", my: "ငှက်ပျောသီး ဖျော်ရည်" },
+  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบราဏ ကော်ဖီ" },
+  "โกโก้": { en: "Cocoa", zh: "可可", my: "ကိုကိုး" },
+  "ชาไทย": { en: "Thai Tea", zh: "泰式奶茶", my: "ထိုင်းလက်ဖက်ရည်" },
+  "ชาเขียว": { en: "Green Tea", zh: "绿茶", my: "လက်ဖက်စိမ်း" },
+  "นมสด": { en: "Fresh Milk", zh: "鲜牛奶", my: "နို့အေး" },
+  
+  // --- ชื่อท็อปปิ้ง ---
+  "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "အနက်ရောင် ပုလဲ" },
+  "ไข่มุกสีทอง": { en: "Gold Pearl", zh: "金珍珠", my: "ရွှေရောင် ပုလဲ" },
+  "ฟรุ้ตสลัด": { en: "Fruit Salad", zh: "水果沙拉", my: "သစ်သီး စုံ" },
+  "บุกนมสด": { en: "Milk Jelly", zh: "鲜奶椰果", my: "နို့ဂျယ်လီ" },
+  "บุกเฉาก๊วย": { en: "Grass Jelly", zh: "仙草", my: "ကျောက်ကျော" },
+  "บุกน้ำผึ้ง": { en: "Honey Jelly", zh: "蜂蜜椰果", my: "ပျားရည် ဂျယ်လီ" },
+  "บุกบราวน์ซูการ์": { en: "Brown Sugar Jelly", zh: "黑糖椰果", my: "ဘရောင်းရှူဂါ ဂျယ်လီ" }
+};
 
 const translations = {
   th:{
@@ -156,17 +175,19 @@ function t(key){
 }
 
 function getMenuName(item){
-  if(currentLanguage==="my") return item.name_my || item.name;
-  if(currentLanguage==="zh") return item.name_zh || item.name;
-  if(currentLanguage==="en") return item.name_en || item.name;
-  return item.name;
+  if(currentLanguage === "th") return item.name;
+  if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
+    return itemDictionary[item.name][currentLanguage];
+  }
+  return item[`name_${currentLanguage}`] || item.name;
 }
 
 function getToppingName(item){
-  if(currentLanguage==="my") return item.name_my || item.name;
-  if(currentLanguage==="zh") return item.name_zh || item.name;
-  if(currentLanguage==="en") return item.name_en || item.name;
-  return item.name;
+  if(currentLanguage === "th") return item.name;
+  if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
+    return itemDictionary[item.name][currentLanguage];
+  }
+  return item[`name_${currentLanguage}`] || item.name;
 }
 
 function changeLanguage(language){
@@ -299,9 +320,6 @@ function getSelectedToppings(menuIndex){
     if(!topping) return null;
     return {
       name:topping.name,
-      name_my:topping.name_my || topping.name,
-      name_zh:topping.name_zh || topping.name,
-      name_en:topping.name_en || topping.name,
       price:Number(topping.price)
     };
   }).filter(Boolean);
@@ -316,9 +334,6 @@ function addToCart(menuIndex){
 
   cart.push({
     menu_name:item.name,
-    menu_name_my:item.name_my || item.name,
-    menu_name_zh:item.name_zh || item.name,
-    menu_name_en:item.name_en || item.name,
     price:Number(item.price),
     toppings:toppings,
     total_price:totalPrice
@@ -361,8 +376,8 @@ function renderCartModal(){
   }
 
   container.innerHTML = cart.map((item, index) => {
-    const name = item[`menu_name_${currentLanguage}`] || item.menu_name;
-    const toppingsList = item.toppings.map(t => t[`name_${currentLanguage}`] || t.name).join(", ");
+    const name = getMenuName({name: item.menu_name});
+    const toppingsList = item.toppings.map(t => getToppingName({name: t.name})).join(", ");
     
     return `
       <div class="py-2.5 flex justify-between items-center gap-2">
