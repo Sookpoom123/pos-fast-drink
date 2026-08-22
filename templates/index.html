@@ -102,18 +102,28 @@ let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
-// 📖 พจนานุกรมแปลชื่อเมนูและท็อปปิ้งใน HTML
+// 📖 พจนานุกรมแปลชื่อเมนูและท็อปปิ้งทั้งหมด
 const itemDictionary = {
-  // --- ชื่อเมนู ---
+  // --- รายการเมนู ---
   "กล้วยนมสด": { en: "Banana Fresh Milk", zh: "鲜奶香蕉", my: "ငှက်ပျောသီး နို့အေး" },
   "กล้วยนมสดปั่น": { en: "Banana Milkshake", zh: "香蕉冰沙", my: "ငှက်ပျောသီး ဖျော်ရည်" },
-  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบราဏ ကော်ဖီ" },
+  "กาแฟโบราณ": { en: "Traditional Thai Coffee", zh: "泰式传统咖啡", my: "โบရာဏ ကော်ဖီ" },
   "โกโก้": { en: "Cocoa", zh: "可可", my: "ကိုကိုး" },
+  "โกโก้ปั่น": { en: "Cocoa Smoothie", zh: "可可冰沙", my: "ကိုကိုး ဖျော်ရည်" },
+  "โกโก้ลาวา": { en: "Cocoa Lava", zh: "熔岩可可", my: "ကိုကိုး လာဗာ" },
+  "คาราเมลนมสดปั่น": { en: "Caramel Milkshake", zh: "焦糖鲜奶冰沙", my: "ကာရာမဲလ် နို့အေးဖျော်ရည်" },
+  "แคนตาลูปนมสด": { en: "Cantaloupe Fresh Milk", zh: "哈密瓜鲜奶", my: "သခွားမွှေး နို့အေး" },
   "ชาไทย": { en: "Thai Tea", zh: "泰式奶茶", my: "ထိုင်းလက်ဖက်ရည်" },
   "ชาเขียว": { en: "Green Tea", zh: "绿茶", my: "လက်ဖက်စိမ်း" },
   "นมสด": { en: "Fresh Milk", zh: "鲜牛奶", my: "နို့အေး" },
+  "ชาดำเย็น": { en: "Iced Black Tea", zh: "冰红茶", my: "ကြက်မောင်းအေး" },
+  "ชามะนาว": { en: "Lemon Tea", zh: "柠檬茶", my: "သံပုရာ လက်ဖက်ရည်" },
+  "นมชมพู": { en: "Pink Milk", zh: "粉红奶茶", my: "နို့ဆီအေး" },
+  "เผือกหอมนมสด": { en: "Taro Fresh Milk", zh: "香芋鲜奶", my: "เผือก นို့အေး" },
+  "ชาไทยปั่น": { en: "Thai Tea Smoothie", zh: "泰式奶茶冰沙", my: "ထိုင်းလက်ဖက်ရည် ဖျော်ရည်" },
+  "ชาเขียวปั่น": { en: "Green Tea Smoothie", zh: "绿茶冰沙", my: "လက်ဖက်စိမ်း ဖျော်ရည်" },
   
-  // --- ชื่อท็อปปิ้ง ---
+  // --- รายการท็อปปิ้ง ---
   "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "အနက်ရောင် ပုလဲ" },
   "ไข่มุกสีทอง": { en: "Gold Pearl", zh: "金珍珠", my: "ရွှေရောင် ပုလဲ" },
   "ฟรุ้ตสลัด": { en: "Fruit Salad", zh: "水果沙拉", my: "သစ်သီး စုံ" },
