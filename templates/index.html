@@ -69,8 +69,8 @@
             try {
                 const res = await fetch('/api/data');
                 const data = await res.json();
-                drinksData = data.drinks;
-                toppingsData = data.toppings;
+                drinksData = data.drinks || [];
+                toppingsData = data.toppings || [];
                 renderMenu();
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -93,15 +93,23 @@
             container.innerHTML = '';
             const t = translations[currentLang];
 
+            if (drinksData.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-10">ไม่พบข้อมูลเมนูเครื่องดื่ม</div>';
+                return;
+            }
+
             drinksData.forEach(d => {
                 let toppingOptions = `<option value="">${t.noTopping}</option>`;
                 toppingsData.forEach(top => {
                     toppingOptions += `<option value="${top.name}" data-price="${top.price}">${top.name} (+${top.price}฿)</option>`;
                 });
 
+                // รองรับทั้งชื่อคอลัมน์ image_url และ image
+                const imgUrl = d.image_url || d.image || '';
+
                 container.innerHTML += `
                     <div class="card p-3 shadow-sm text-center">
-                        <img src="${d.image}" class="w-full h-36 object-cover rounded-lg mb-2" alt="${d.name}">
+                        <img src="${imgUrl}" class="w-full h-36 object-cover rounded-lg mb-2" alt="${d.name}">
                         <div class="font-bold text-lg">${d.name}</div>
                         <div class="text-amber-800 font-bold text-md mb-2">${d.price} ฿</div>
                         <select id="top-${d.id}" class="w-full p-2 border rounded-lg text-sm mb-2 bg-gray-50">
@@ -129,7 +137,7 @@
                 total: price + topPrice
             });
 
-            // เด้งกลับเป็น "ไม่ใส่ท็อปปิ้ง"
+            // รีเซ็ตตัวเลือกท็อปปิ้งกลับเป็นไม่ใส่
             topSelect.selectedIndex = 0;
 
             document.getElementById('cart-count').innerText = `${cart.length} รายการ`;
