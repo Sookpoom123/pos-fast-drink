@@ -6,9 +6,15 @@ import os
 app = Flask(__name__)
 
 def get_db_connection():
+    db_url = os.environ.get("DATABASE_URL")
+    # ปรับแต่ง URL ป้องกัน SSL Error
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
     conn = psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        cursor_factory=RealDictCursor
+        db_url,
+        cursor_factory=RealDictCursor,
+        sslmode='require'
     )
     return conn
 
@@ -22,29 +28,21 @@ def get_data():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # ดึงข้อมูลเมนูเครื่องดื่มทั้งหมด
         cur.execute("SELECT * FROM drinks;")
         drinks = cur.fetchall()
         
-        # ดึงข้อมูลท็อปปิ้งทั้งหมด
         cur.execute("SELECT * FROM toppings;")
         toppings = cur.fetchall()
         
         cur.close()
         conn.close()
         
-        # แปลงข้อมูลให้แน่ใจว่าฟิลด์รูปภาพพร้อมใช้งาน
-        for d in drinks:
-            if 'image_url' in d and not d.get('image'):
-                d['image'] = d['image_url']
-                
         return jsonify({
             'drinks': drinks,
             'toppings': toppings
         })
     except Exception as e:
-        print("Database error:", e)
-        # ถ้าเชื่อมต่อ DB ไม่ได้จริงๆ ให้ส่ง 500 error เพื่อให้หน้าเว็บรู้
+        print("Database error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/order', methods=['POST'])
@@ -76,7 +74,7 @@ def create_order():
         
         return jsonify({'status': 'success'})
     except Exception as e:
-        print("Order error:", e)
+        print("Order error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
