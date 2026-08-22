@@ -3,7 +3,7 @@ import psycopg2
 import os
 import json
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # =========================================================
 # DATABASE
