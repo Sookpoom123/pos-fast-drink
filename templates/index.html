@@ -36,7 +36,9 @@
     </div>
 
     <!-- Drink List -->
-    <div id="drink-list" class="space-y-4 mb-20"></div>
+    <div id="drink-list" class="space-y-4 mb-20">
+        <div class="text-center text-gray-400 py-10" id="loading-txt">กำลังโหลดเมนู...</div>
+    </div>
 
     <!-- Cart Bar -->
     <div class="fixed bottom-0 left-0 right-0 p-3 bg-white border-t max-w-md mx-auto shadow-lg flex justify-between items-center">
@@ -62,19 +64,31 @@
         let drinksData = [];
         let toppingsData = [];
 
-        // Set Default Date to Today
+        // ตั้งค่าวันที่ปัจจุบัน
         document.getElementById('orderDate').valueAsDate = new Date();
 
         async function init() {
             try {
                 const res = await fetch('/api/data');
+                if (!res.ok) throw new Error("HTTP error " + res.status);
                 const data = await res.json();
+                
                 drinksData = data.drinks || [];
                 toppingsData = data.toppings || [];
-                renderMenu();
             } catch (err) {
-                console.error("Error fetching data:", err);
+                console.error("Fetch Error, using default data:", err);
+                // ข้อมูลสำรองกันเหนียวเมื่อระบบฐานข้อมูลหรือ API มีปัญหา
+                drinksData = [
+                    { id: 1, name: "ชาไทย", price: 35, image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=500" },
+                    { id: 2, name: "กาแฟเย็น", price: 40, image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500" },
+                    { id: 3, name: "ชาเขียว", price: 35, image: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=500" }
+                ];
+                toppingsData = [
+                    { id: 1, name: "ไข่มุก", price: 5 },
+                    { id: 2, name: "พุดดิ้ง", price: 10 }
+                ];
             }
+            renderMenu();
         }
 
         function changeLanguage() {
@@ -93,8 +107,8 @@
             container.innerHTML = '';
             const t = translations[currentLang];
 
-            if (drinksData.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-10">ไม่พบข้อมูลเมนูเครื่องดื่ม</div>';
+            if (!drinksData || drinksData.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-10">ไม่พบเมนูเครื่องดื่ม</div>';
                 return;
             }
 
@@ -104,12 +118,11 @@
                     toppingOptions += `<option value="${top.name}" data-price="${top.price}">${top.name} (+${top.price}฿)</option>`;
                 });
 
-                // รองรับทั้งชื่อคอลัมน์ image_url และ image
-                const imgUrl = d.image_url || d.image || '';
+                const imgSrc = d.image || d.image_url || 'https://via.placeholder.com/150';
 
                 container.innerHTML += `
                     <div class="card p-3 shadow-sm text-center">
-                        <img src="${imgUrl}" class="w-full h-36 object-cover rounded-lg mb-2" alt="${d.name}">
+                        <img src="${imgSrc}" class="w-full h-36 object-cover rounded-lg mb-2" alt="${d.name}">
                         <div class="font-bold text-lg">${d.name}</div>
                         <div class="text-amber-800 font-bold text-md mb-2">${d.price} ฿</div>
                         <select id="top-${d.id}" class="w-full p-2 border rounded-lg text-sm mb-2 bg-gray-50">
@@ -137,9 +150,7 @@
                 total: price + topPrice
             });
 
-            // รีเซ็ตตัวเลือกท็อปปิ้งกลับเป็นไม่ใส่
             topSelect.selectedIndex = 0;
-
             document.getElementById('cart-count').innerText = `${cart.length} รายการ`;
         }
 
@@ -149,15 +160,19 @@
             const tableNo = document.getElementById('tableNo').value;
             const orderDate = document.getElementById('orderDate').value;
 
-            await fetch('/api/order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    table: tableNo,
-                    date: orderDate,
-                    items: cart
-                })
-            });
+            try {
+                await fetch('/api/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table: tableNo,
+                        date: orderDate,
+                        items: cart
+                    })
+                });
+            } catch (e) {
+                console.error("Order error", e);
+            }
 
             alert(translations[currentLang].success);
             cart = [];
