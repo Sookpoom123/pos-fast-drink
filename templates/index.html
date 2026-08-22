@@ -66,11 +66,15 @@
         document.getElementById('orderDate').valueAsDate = new Date();
 
         async function init() {
-            const res = await fetch('/api/data');
-            const data = await res.json();
-            drinksData = data.drinks;
-            toppingsData = data.toppings;
-            renderMenu();
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                drinksData = data.drinks;
+                toppingsData = data.toppings;
+                renderMenu();
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            }
         }
 
         function changeLanguage() {
@@ -97,7 +101,7 @@
 
                 container.innerHTML += `
                     <div class="card p-3 shadow-sm text-center">
-                        <img src="${d.image_url}" class="w-full h-36 object-cover rounded-lg mb-2">
+                        <img src="${d.image}" class="w-full h-36 object-cover rounded-lg mb-2" alt="${d.name}">
                         <div class="font-bold text-lg">${d.name}</div>
                         <div class="text-amber-800 font-bold text-md mb-2">${d.price} ฿</div>
                         <select id="top-${d.id}" class="w-full p-2 border rounded-lg text-sm mb-2 bg-gray-50">
@@ -125,7 +129,7 @@
                 total: price + topPrice
             });
 
-            // RESET TOPPING SELECTION BACK TO NONE
+            // เด้งกลับเป็น "ไม่ใส่ท็อปปิ้ง"
             topSelect.selectedIndex = 0;
 
             document.getElementById('cart-count').innerText = `${cart.length} รายการ`;
