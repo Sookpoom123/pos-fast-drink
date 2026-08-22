@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="th">
 
 <head>
@@ -8,135 +7,114 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
-    <title>🧋 Order Drinks</title>
+    <title>🧋 สั่งเครื่องดื่ม</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
 
         * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #F4EFEA;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
 
-        html {
-            scroll-behavior: auto;
-        }
-
         body {
-            background: #F4EFEA;
-            font-family:
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-
-            touch-action: manipulation;
-
-            padding-bottom: 110px;
+            padding: 10px;
+            padding-bottom: 100px;
         }
 
         button,
-        label,
         input,
-        select {
+        label {
             touch-action: manipulation;
         }
 
         .menu-card {
-            background: #fff;
+            background: white;
             border-radius: 14px;
             border: 1.5px solid #C8B2A2;
             overflow: hidden;
-            contain: content;
         }
 
         .menu-image {
-            height: 100px;
             width: 100%;
+            height: 110px;
             object-fit: contain;
+            background: #fafafa;
+            border-radius: 10px;
+        }
+
+        .topping-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
             background: #fafafa;
         }
 
-        .topping-list {
-            max-height: 150px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .topping-option {
+        .topping-item {
             display: flex;
             align-items: center;
             gap: 8px;
-
-            min-height: 38px;
-
-            padding: 6px 8px;
-
-            border-radius: 8px;
-
-            background: #fafafa;
-
-            border: 1px solid #eee;
-
+            padding: 7px 6px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
-
-            user-select: none;
         }
 
-        .topping-option:active {
-            transform: scale(0.98);
+        .topping-item:last-child {
+            border-bottom: none;
         }
 
-        .topping-option input {
-            width: 18px;
-            height: 18px;
-
-            accent-color: #92400e;
-
+        .topping-checkbox {
+            width: 20px;
+            height: 20px;
             flex-shrink: 0;
         }
 
-        .topping-name {
-            flex: 1;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .topping-price {
-            font-size: 11px;
-            color: #92400e;
-            font-weight: 700;
-        }
-
-        .add-button {
+        .order-button {
             min-height: 42px;
         }
 
-        .bottom-bar {
-            padding-bottom:
-                calc(12px + env(safe-area-inset-bottom));
+        .language-button {
+            min-width: 62px;
+            min-height: 40px;
+        }
+
+        .selected-count {
+            font-size: 11px;
+            color: #92400e;
+            font-weight: bold;
         }
 
         .loading {
-            animation: pulse 1.2s infinite;
+            text-align: center;
+            padding: 40px 10px;
+            color: #777;
         }
 
-        @keyframes pulse {
+        @media (min-width: 768px) {
 
-            0% {
-                opacity: 0.5;
+            body {
+                padding: 16px;
+                padding-bottom: 110px;
             }
 
-            50% {
-                opacity: 1;
+            .menu-image {
+                height: 150px;
             }
 
-            100% {
-                opacity: 0.5;
+            .topping-item {
+                padding: 9px 7px;
             }
 
         }
@@ -146,602 +124,502 @@
 </head>
 
 
-<body class="p-3">
+<body>
 
-
-<!-- =========================================================
-     ภาษา
-========================================================= -->
-
-<div class="flex justify-end gap-1 mb-2">
-
-    <button
-        onclick="changeLang('th')"
-        class="px-2 py-1 bg-amber-100 text-amber-900 rounded text-xs font-bold border border-amber-300"
-    >
-        🇹🇭 TH
-    </button>
-
-    <button
-        onclick="changeLang('en')"
-        class="px-2 py-1 bg-amber-100 text-amber-900 rounded text-xs font-bold border border-amber-300"
-    >
-        🇬🇧 EN
-    </button>
-
-    <button
-        onclick="changeLang('zh')"
-        class="px-2 py-1 bg-amber-100 text-amber-900 rounded text-xs font-bold border border-amber-300"
-    >
-        🇨🇳 ZH
-    </button>
-
-    <button
-        onclick="changeLang('my')"
-        class="px-2 py-1 bg-amber-100 text-amber-900 rounded text-xs font-bold border border-amber-300"
-    >
-        🇲🇲 MY
-    </button>
-
-</div>
-
-
-<!-- =========================================================
-     หัวข้อ
-========================================================= -->
-
-<div
-    id="ui-title"
-    class="bg-amber-800 text-white p-3 rounded-lg text-center font-bold mb-3 shadow"
->
-    🧋 สั่งเครื่องดื่ม (กลับบ้าน)
-</div>
-
-
-<!-- =========================================================
-     ชื่อลูกค้า / คิว
-========================================================= -->
-
-<div class="mb-3">
-
-    <input
-        id="tableNo"
-        type="text"
-        value="สั่งกลับบ้าน"
-        autocomplete="off"
-        class="w-full p-3 border border-amber-300 rounded-lg text-sm bg-white"
-    >
-
-</div>
-
-
-<!-- =========================================================
-     เมนู
-========================================================= -->
-
-<div
-    id="menuContainer"
-    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <div
-        class="col-span-full text-center text-gray-500 py-10 loading"
+        class="bg-amber-800 text-white p-3 rounded-xl text-center font-bold mb-3 shadow"
     >
-        กำลังโหลดเมนู...
+
+        <div
+            id="titleText"
+            class="text-lg"
+        >
+            🧋 สั่งเครื่องดื่ม
+        </div>
+
+        <div
+            id="subtitleText"
+            class="text-xs opacity-90 mt-1"
+        >
+            สั่งกลับบ้าน
+        </div>
+
     </div>
 
-</div>
+
+    <!-- =====================================================
+         LANGUAGE
+    ====================================================== -->
+
+    <div class="bg-white rounded-xl p-2 mb-3 shadow-sm">
+
+        <div
+            id="languageText"
+            class="text-xs text-gray-500 mb-2 text-center"
+        >
+            ภาษา / Language
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+
+            <button
+                id="lang-th"
+                onclick="changeLanguage('th')"
+                class="language-button rounded-lg border font-bold text-sm bg-amber-800 text-white"
+            >
+                🇹🇭 ไทย
+            </button>
+
+            <button
+                id="lang-my"
+                onclick="changeLanguage('my')"
+                class="language-button rounded-lg border font-bold text-sm bg-white"
+            >
+                🇲🇲 မြန်မာ
+            </button>
+
+            <button
+                id="lang-zh"
+                onclick="changeLanguage('zh')"
+                class="language-button rounded-lg border font-bold text-sm bg-white"
+            >
+                🇨🇳 中文
+            </button>
+
+            <button
+                id="lang-en"
+                onclick="changeLanguage('en')"
+                class="language-button rounded-lg border font-bold text-sm bg-white"
+            >
+                🇬🇧 English
+            </button>
+
+        </div>
+
+    </div>
 
 
-<!-- =========================================================
-     Bottom Cart
-========================================================= -->
+    <!-- =====================================================
+         CUSTOMER / QUEUE
+    ====================================================== -->
 
-<div
-    class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 shadow-lg z-40 bottom-bar"
+    <div class="mb-3">
+
+        <input
+            id="tableNo"
+            type="text"
+            value="สั่งกลับบ้าน"
+            class="w-full p-3 border border-amber-300 rounded-xl text-sm bg-white"
+            placeholder="ระบุชื่อลูกค้า/คิว"
+            autocomplete="off"
+        >
+
+    </div>
 
 
-    <div class="p-3">
+    <!-- =====================================================
+         MENU
+    ====================================================== -->
 
-        <div class="flex justify-between items-center">
+    <div
+        id="menuContainer"
+        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+    >
+
+        <div class="loading">
+            กำลังโหลดเมนู...
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CART BAR
+    ====================================================== -->
+
+    <div
+        class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-50"
+    >
+
+        <div class="max-w-7xl mx-auto flex justify-between items-center gap-3">
 
             <div>
 
-                <div class="text-xs text-gray-500">
-
-                    <span id="ui-total-label">
-                        ราคารวม
-                    </span>
-
-                    (
-
-                    <span id="cartCount">
-                        0
-                    </span>
-
-                    <span id="ui-item-label">
-                        รายการ
-                    </span>
-
-                    )
-
+                <div
+                    id="cartLabel"
+                    class="text-xs text-gray-500"
+                >
+                    ราคารวม
+                    (<span id="cartCount">0</span>
+                    <span id="itemText">รายการ</span>)
                 </div>
 
-                <div class="text-xl font-bold text-amber-900">
+                <div
+                    class="text-xl font-bold text-amber-900"
+                >
 
-                    <span id="cartTotal">
-                        0
-                    </span>
-
-                    ฿
+                    <span id="cartTotal">0</span> ฿
 
                 </div>
 
             </div>
 
 
-            <div class="flex gap-2">
-
-                <button
-                    id="ui-view-cart-btn"
-                    onclick="openCartModal()"
-                    class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-3 rounded-lg text-xs font-bold"
-                >
-                    🛒 รายการ
-                </button>
-
-                <button
-                    id="ui-submit-btn"
-                    onclick="submitOrder()"
-                    class="bg-amber-800 text-white px-4 py-3 rounded-lg font-bold text-sm"
-                >
-                    🚀 ยืนยันสั่งซื้อ
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     Cart Modal
-========================================================= -->
-
-<div
-    id="cartModal"
-    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden"
-
-
-    <div
-        class="bg-white w-full max-w-md rounded-xl p-4 shadow-2xl flex flex-col max-h-[80vh]"
-    >
-
-        <div
-            class="flex justify-between items-center border-b pb-2 mb-3"
-        >
-
-            <h3
-                id="ui-modal-title"
-                class="font-bold text-amber-900 text-lg"
-            >
-                🛒 รายการในตะกร้า
-            </h3>
-
             <button
-                onclick="closeCartModal()"
-                class="text-gray-400 font-bold text-2xl px-2"
+                id="submitButton"
+                onclick="submitOrder()"
+                class="bg-amber-800 text-white px-5 py-3 rounded-xl font-bold active:scale-95 transition"
             >
-                &times;
-            </button>
-
-        </div>
-
-
-        <div
-            id="cartItemsList"
-            class="flex-1 overflow-y-auto divide-y divide-gray-100 my-2"
-        ></div>
-
-
-        <div
-            class="border-t pt-3 mt-2 flex justify-between items-center"
-        >
-
-            <button
-                id="ui-clear-all-btn"
-                onclick="clearCart()"
-                class="text-red-600 border border-red-200 bg-red-50 px-3 py-2 rounded text-xs font-bold"
-            >
-                🗑️ ล้างทั้งหมด
-            </button>
-
-            <button
-                id="ui-close-modal-btn"
-                onclick="closeCartModal()"
-                class="bg-amber-800 text-white px-4 py-2 rounded text-xs font-bold"
-            >
-                ปิด
+                🚀 <span id="submitText">ยืนยันสั่งซื้อ</span>
             </button>
 
         </div>
 
     </div>
-
-</div>
 
 
 <script>
 
+"use strict";
 
-// =========================================================
-// ภาษา
-// =========================================================
 
-const i18n = {
+/* =========================================================
+   GLOBAL DATA
+========================================================= */
+
+let menuData = [];
+let toppingData = [];
+
+let cart = [];
+
+let currentLanguage =
+    localStorage.getItem("orderLanguage") || "th";
+
+let submitting = false;
+
+
+/* =========================================================
+   TRANSLATIONS
+========================================================= */
+
+const translations = {
 
     th: {
 
-        title:
-            "🧋 สั่งเครื่องดื่ม (กลับบ้าน)",
+        title: "🧋 สั่งเครื่องดื่ม",
 
-        tablePlaceholder:
-            "ระบุชื่อลูกค้า/คิว",
+        subtitle: "สั่งกลับบ้าน",
 
-        tableDefault:
-            "สั่งกลับบ้าน",
+        language: "ภาษา / Language",
 
-        noTopping:
-            "ไม่ใส่ท็อปปิ้ง",
+        customerPlaceholder: "ระบุชื่อลูกค้า/คิว",
 
-        addBtn:
-            "➕ สั่ง",
+        noTopping: "ไม่ใส่ท็อปปิ้ง",
 
-        totalLabel:
-            "ราคารวม",
+        topping: "ท็อปปิ้ง",
 
-        itemLabel:
-            "รายการ",
+        selected: "เลือกแล้ว",
 
-        submitBtn:
-            "🚀 ยืนยันสั่งซื้อ",
+        order: "สั่ง",
 
-        viewCartBtn:
-            "🛒 รายการ",
+        total: "ราคารวม",
 
-        modalTitle:
-            "🛒 รายการในตะกร้า",
+        item: "รายการ",
 
-        clearAllBtn:
-            "🗑️ ล้างทั้งหมด",
+        confirm: "ยืนยันสั่งซื้อ",
 
-        closeBtn:
-            "ปิด",
+        loading: "กำลังโหลดเมนู...",
 
-        emptyCartText:
-            "ไม่มีสินค้าในตะกร้า",
+        loadingError: "โหลดข้อมูลเมนูไม่สำเร็จ",
 
-        errLoad:
-            "โหลดข้อมูลเมนูไม่สำเร็จ",
+        enterCustomer: "กรุณากรอกชื่อ/คิว",
 
-        alertName:
-            "กรุณากรอกชื่อ/คิว",
+        emptyCart: "ยังไม่ได้เลือกรายการ",
 
-        alertEmpty:
-            "ยังไม่ได้เลือกรายการ",
+        success: "🎉 ส่งออเดอร์เรียบร้อย!",
 
-        alertSuccess:
-            "🎉 ส่งออเดอร์เรียบร้อย!",
+        error: "เกิดข้อผิดพลาดในการส่งออเดอร์",
 
-        alertErr:
-            "เกิดข้อผิดพลาดในการส่งออเดอร์"
+        sending: "กำลังส่ง..."
 
     },
-
-
-    en: {
-
-        title:
-            "🧋 Order Drinks (Takeaway)",
-
-        tablePlaceholder:
-            "Customer Name / Queue",
-
-        tableDefault:
-            "Takeaway",
-
-        noTopping:
-            "No Topping",
-
-        addBtn:
-            "➕ Add",
-
-        totalLabel:
-            "Total",
-
-        itemLabel:
-            "items",
-
-        submitBtn:
-            "🚀 Confirm Order",
-
-        viewCartBtn:
-            "🛒 Cart",
-
-        modalTitle:
-            "🛒 Cart Items",
-
-        clearAllBtn:
-            "🗑️ Clear All",
-
-        closeBtn:
-            "Close",
-
-        emptyCartText:
-            "Cart is empty",
-
-        errLoad:
-            "Failed to load menu",
-
-        alertName:
-            "Please enter name/queue",
-
-        alertEmpty:
-            "Cart is empty",
-
-        alertSuccess:
-            "🎉 Order submitted!",
-
-        alertErr:
-            "Order submission failed"
-
-    },
-
-
-    zh: {
-
-        title:
-            "🧋 订购饮料 (外带)",
-
-        tablePlaceholder:
-            "顾客姓名 / 取餐号",
-
-        tableDefault:
-            "外带",
-
-        noTopping:
-            "不加配料",
-
-        addBtn:
-            "➕ 点餐",
-
-        totalLabel:
-            "总计",
-
-        itemLabel:
-            "项",
-
-        submitBtn:
-            "🚀 确认下单",
-
-        viewCartBtn:
-            "🛒 购物车",
-
-        modalTitle:
-            "🛒 购物车列表",
-
-        clearAllBtn:
-            "🗑️ 清空",
-
-        closeBtn:
-            "关闭",
-
-        emptyCartText:
-            "购物车为空",
-
-        errLoad:
-            "加载菜单失败",
-
-        alertName:
-            "请输入姓名或取餐号",
-
-        alertEmpty:
-            "购物车为空",
-
-        alertSuccess:
-            "🎉 下单成功！",
-
-        alertErr:
-            "下单发生错误"
-
-    },
-
 
     my: {
 
-        title:
-            "🧋 အဖျော်ယမကာ မှာယူရန် (ပါဆယ်)",
+        title: "🧋 အဖျော်ယမကာ မှာယူရန်",
 
-        tablePlaceholder:
-            "အမည် / ကျူးနံပါတ်",
+        subtitle: "အိမ်ယူရန်",
 
-        tableDefault:
-            "ပါဆယ်",
+        language: "ဘာသာစကား / Language",
 
-        noTopping:
-            "တော့ပင်း မယူပါ",
+        customerPlaceholder: "ဖောက်သည်အမည် / နံပါတ်",
 
-        addBtn:
-            "➕ မှာမည်",
+        noTopping: "Topping မထည့်ပါ",
 
-        totalLabel:
-            "စုစုပေါင်း",
+        topping: "Topping",
 
-        itemLabel:
-            "ခု",
+        selected: "ရွေးထားသည်",
 
-        submitBtn:
-            "🚀 အတည်ပြုမည်",
+        order: "မှာယူမည်",
 
-        viewCartBtn:
-            "🛒 စာရင်း",
+        total: "စုစုပေါင်း",
 
-        modalTitle:
-            "🛒 မှာယူထားသော စာရင်း",
+        item: "รายการ",
 
-        clearAllBtn:
-            "🗑️ အားလုံးဖျက်မည်",
+        confirm: "အော်ဒါတင်မည်",
 
-        closeBtn:
-            "ပိတ်မည်",
+        loading: "မီနူးများ ဖွင့်နေသည်...",
 
-        emptyCartText:
-            "ပစ္စည်း မရှိသေးပါ",
+        loadingError: "မီနူးဒေတာ ဖွင့်၍မရပါ",
 
-        errLoad:
-            "မီနူး ဒေတာ ရယူ၍ မရပါ",
+        enterCustomer: "ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
 
-        alertName:
-            "ကျေးဇူးပြု၍ အမည်ဖြည့်ပါ",
+        emptyCart: "ပစ္စည်းမရွေးရသေးပါ",
 
-        alertEmpty:
-            "ပစ္စည်း မရွေးရသေးပါ",
+        success: "🎉 အော်ဒါတင်ပြီးပါပြီ!",
 
-        alertSuccess:
-            "🎉 မှာယူမှု အောင်မြင်ပါသည်!",
+        error: "အော်ဒါပို့ရာတွင် အမှားဖြစ်နေပါသည်",
 
-        alertErr:
-            "မှာယူမှု မအောင်မြင်ပါ"
+        sending: "ပို့နေသည်..."
+
+    },
+
+    zh: {
+
+        title: "🧋 饮料点单",
+
+        subtitle: "外带",
+
+        language: "语言 / Language",
+
+        customerPlaceholder: "请输入顾客姓名/号码",
+
+        noTopping: "不加配料",
+
+        topping: "配料",
+
+        selected: "已选择",
+
+        order: "下单",
+
+        total: "总价",
+
+        item: "项",
+
+        confirm: "确认下单",
+
+        loading: "正在加载菜单...",
+
+        loadingError: "菜单加载失败",
+
+        enterCustomer: "请输入顾客姓名/号码",
+
+        emptyCart: "还没有选择商品",
+
+        success: "🎉 订单提交成功！",
+
+        error: "订单提交失败",
+
+        sending: "正在提交..."
+
+    },
+
+    en: {
+
+        title: "🧋 Drink Order",
+
+        subtitle: "Take Away",
+
+        language: "Language",
+
+        customerPlaceholder: "Customer name / Queue",
+
+        noTopping: "No toppings",
+
+        topping: "Toppings",
+
+        selected: "Selected",
+
+        order: "Order",
+
+        total: "Total",
+
+        item: "items",
+
+        confirm: "Confirm Order",
+
+        loading: "Loading menu...",
+
+        loadingError: "Unable to load menu",
+
+        enterCustomer: "Please enter customer name / queue",
+
+        emptyCart: "Please select an item",
+
+        success: "🎉 Order submitted successfully!",
+
+        error: "Failed to submit order",
+
+        sending: "Sending..."
 
     }
 
 };
 
 
-// =========================================================
-// ตัวแปร
-// =========================================================
+/* =========================================================
+   GET TRANSLATION
+========================================================= */
 
-let currentLang = "th";
+function t(key) {
 
-let menuData = [];
-
-let toppingData = [];
-
-let cart = [];
-
-let isSubmitting = false;
-
-
-// =========================================================
-// Escape HTML
-// ป้องกันชื่อเมนู/ท็อปปิ้งที่มีอักขระพิเศษ
-// =========================================================
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return translations[currentLanguage][key]
+        || translations.th[key]
+        || key;
 
 }
 
 
-// =========================================================
-// เปลี่ยนภาษา
-// =========================================================
+/* =========================================================
+   GET MENU NAME
+========================================================= */
 
-function changeLang(lang) {
+function getMenuName(item) {
 
-    currentLang = lang;
-
-    const t = i18n[lang];
-
-    document.getElementById(
-        "ui-title"
-    ).innerText = t.title;
-
-
-    const tableInput =
-        document.getElementById("tableNo");
-
-
-    tableInput.placeholder =
-        t.tablePlaceholder;
-
-
-    if (
-        Object.values(i18n).some(
-            item =>
-                item.tableDefault ===
-                tableInput.value
-        )
-    ) {
-
-        tableInput.value =
-            t.tableDefault;
-
+    if (currentLanguage === "my") {
+        return item.name_my || item.name;
     }
 
+    if (currentLanguage === "zh") {
+        return item.name_zh || item.name;
+    }
 
-    document.getElementById(
-        "ui-total-label"
-    ).innerText =
-        t.totalLabel;
+    if (currentLanguage === "en") {
+        return item.name_en || item.name;
+    }
 
-
-    document.getElementById(
-        "ui-item-label"
-    ).innerText =
-        t.itemLabel;
-
-
-    document.getElementById(
-        "ui-submit-btn"
-    ).innerText =
-        t.submitBtn;
+    return item.name;
+}
 
 
-    document.getElementById(
-        "ui-view-cart-btn"
-    ).innerText =
-        t.viewCartBtn;
+/* =========================================================
+   GET TOPPING NAME
+========================================================= */
+
+function getToppingName(item) {
+
+    if (currentLanguage === "my") {
+        return item.name_my || item.name;
+    }
+
+    if (currentLanguage === "zh") {
+        return item.name_zh || item.name;
+    }
+
+    if (currentLanguage === "en") {
+        return item.name_en || item.name;
+    }
+
+    return item.name;
+}
 
 
-    document.getElementById(
-        "ui-modal-title"
-    ).innerText =
-        t.modalTitle;
+/* =========================================================
+   CHANGE LANGUAGE
+========================================================= */
 
+function changeLanguage(language) {
 
-    document.getElementById(
-        "ui-clear-all-btn"
-    ).innerText =
-        t.clearAllBtn;
+    currentLanguage = language;
 
+    localStorage.setItem(
+        "orderLanguage",
+        language
+    );
 
-    document.getElementById(
-        "ui-close-modal-btn"
-    ).innerText =
-        t.closeBtn;
+    updateLanguageButtons();
 
+    updateStaticTexts();
 
     renderMenu();
 
-    renderCartModal();
+    updateCartUI();
 
 }
 
 
-// =========================================================
-// โหลดข้อมูล
-// =========================================================
+/* =========================================================
+   LANGUAGE BUTTON
+========================================================= */
+
+function updateLanguageButtons() {
+
+    const languages = [
+        "th",
+        "my",
+        "zh",
+        "en"
+    ];
+
+    languages.forEach(lang => {
+
+        const button =
+            document.getElementById(
+                lang-${lang}
+            );
+
+        if (!button) return;
+
+        if (lang === currentLanguage) {
+
+            button.className =
+                "language-button rounded-lg border font-bold text-sm bg-amber-800 text-white";
+
+        } else {
+
+            button.className =
+                "language-button rounded-lg border font-bold text-sm bg-white";
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   STATIC TEXT
+========================================================= */
+
+function updateStaticTexts() {
+
+    document.getElementById("titleText").innerText =
+        t("title");
+
+    document.getElementById("subtitleText").innerText =
+        t("subtitle");
+
+    document.getElementById("languageText").innerText =
+        t("language");
+
+    document.getElementById("tableNo").placeholder =
+        t("customerPlaceholder");
+
+    document.getElementById("submitText").innerText =
+        t("confirm");
+
+    updateCartUI();
+
+}
+
+
+/* =========================================================
+   LOAD DATA
+========================================================= */
 
 async function loadInitData() {
 
@@ -751,41 +629,35 @@ async function loadInitData() {
             await fetch(
                 "/api/init-data",
                 {
+                    method: "GET",
                     cache: "no-store"
                 }
             );
 
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Load failed"
-            );
-
-        }
-
-
         const data =
             await response.json();
 
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.error || "Load error"
+            );
+
+        }
 
         menuData =
             Array.isArray(data.menu)
                 ? data.menu
                 : [];
 
-
         toppingData =
             Array.isArray(data.toppings)
                 ? data.toppings
                 : [];
 
-
         renderMenu();
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
 
@@ -794,9 +666,11 @@ async function loadInitData() {
         ).innerHTML = `
 
             <div
-                class="col-span-full text-center text-red-500 py-10"
+                class="col-span-full text-center p-10 text-red-600"
             >
-                ${i18n[currentLang].errLoad}
+
+                ❌ ${t("loadingError")}
+
             </div>
 
         `;
@@ -806,78 +680,9 @@ async function loadInitData() {
 }
 
 
-// =========================================================
-// สร้างรายการท็อปปิ้ง
-// =========================================================
-
-function buildToppings() {
-
-    if (
-        !toppingData ||
-        toppingData.length === 0
-    ) {
-
-        return `
-            <div class="text-xs text-gray-400 p-2">
-                ${i18n[currentLang].noTopping}
-            </div>
-        `;
-
-    }
-
-
-    return toppingData
-        .map(
-            (top, topIndex) => {
-
-                const name =
-                    escapeHTML(top.name);
-
-                const price =
-                    Number(top.price || 0);
-
-
-                return `
-
-                    <label
-                        class="topping-option"
-                    >
-
-                        <input
-                            type="checkbox"
-                            class="topping-check"
-                            data-top-index="${topIndex}"
-                        >
-
-                        <span
-                            class="topping-name"
-                        >
-                            ${name}
-                        </span>
-
-                        <span
-                            class="topping-price"
-                        >
-                            +${price}฿
-                        </span>
-
-                    </label>
-
-                `;
-
-            }
-        )
-        .join("");
-
-}
-
-
-// =========================================================
-// แสดงเมนู
-//
-// ใช้ innerHTML ครั้งเดียวตอนโหลด
-// ไม่ render ใหม่ทุกครั้งที่กดสั่ง
-// =========================================================
+/* =========================================================
+   RENDER MENU
+========================================================= */
 
 function renderMenu() {
 
@@ -886,361 +691,507 @@ function renderMenu() {
             "menuContainer"
         );
 
-
-    if (
-        !menuData ||
-        menuData.length === 0
-    ) {
+    if (!menuData.length) {
 
         container.innerHTML = `
-
-            <div
-                class="col-span-full text-center text-gray-500 py-10"
-            >
-                ไม่มีข้อมูลเมนู
+            <div class="col-span-full loading">
+                ${t("loadingError")}
             </div>
-
         `;
 
         return;
-
-    }
-
-
-    const t =
-        i18n[currentLang];
-
-
-    let html = "";
-
-
-    for (
-        let i = 0;
-        i < menuData.length;
-        i++
-    ) {
-
-        const item =
-            menuData[i];
-
-
-        const image =
-            escapeHTML(
-                item.image_url ||
-                "https://via.placeholder.com/100"
-            );
-
-
-        const name =
-            escapeHTML(item.name);
-
-
-        const price =
-            Number(item.price || 0);
-
-
-        html += `
-
-            <div
-                class="menu-card shadow-sm"
-                data-menu-index="${i}"
-            >
-
-                <img
-                    src="${image}"
-                    class="menu-image"
-                    loading="lazy"
-                    decoding="async"
-                    onerror="this.style.display='none'"
-                >
-
-
-                <div class="p-2">
-
-                    <div
-                        class="font-bold text-sm text-gray-800 min-h-[40px]"
-                    >
-                        ${name}
-                    </div>
-
-
-                    <div
-                        class="text-amber-800 font-extrabold text-sm mb-2"
-                    >
-                        ${price} ฿
-                    </div>
-
-
-                    <!-- ======================================
-                         ท็อปปิ้งหลายรายการ
-                    ======================================= -->
-
-                    <div
-                        class="text-xs font-bold text-gray-600 mb-1"
-                    >
-                        ${t.noTopping}
-                    </div>
-
-
-                    <div
-                        class="topping-list space-y-1"
-                    >
-
-                        ${buildToppings()}
-
-                    </div>
-
-
-                    <!-- ======================================
-                         ปุ่มสั่ง
-                    ======================================= -->
-
-                    <button
-                        type="button"
-                        class="add-button add-to-cart-btn w-full bg-amber-800 text-white text-xs font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-[0.98]"
-                        data-menu-index="${i}"
-                    >
-                        ${t.addBtn}
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
     }
 
 
     container.innerHTML =
-        html;
+        menuData.map(
+            (item, menuIndex) => {
+
+                const menuName =
+                    getMenuName(item);
+
+
+                let toppingsHTML = "";
+
+
+                if (toppingData.length > 0) {
+
+                    toppingsHTML = `
+
+                        <div class="topping-box mt-2">
+
+                            <div
+                                class="text-xs font-bold text-amber-800 p-2 border-b"
+                            >
+                                ${t("topping")}
+                            </div>
+
+                            <div>
+
+                                ${toppingData.map(
+                                    (top, topIndex) => `
+
+                                    <label
+                                        class="topping-item"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            class="topping-checkbox"
+                                            data-menu-index="${menuIndex}"
+                                            data-topping-index="${topIndex}"
+                                        >
+
+                                        <span
+                                            class="text-xs flex-1"
+                                        >
+                                            ${escapeHTML(
+                                                getToppingName(top)
+                                            )}
+                                        </span>
+
+                                        <span
+                                            class="text-xs text-amber-700 whitespace-nowrap"
+                                        >
+                                            +${formatPrice(top.price)} ฿
+                                        </span>
+
+                                    </label>
+
+                                `
+                                ).join("")}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                } else {
+
+                    toppingsHTML = `
+
+                        <div
+                            class="text-xs text-gray-400 mt-2"
+                        >
+                            ${t("noTopping")}
+                        </div>
+
+                    `;
+
+                }
+
+
+                return `
+
+                    <div
+                        class="menu-card p-2 flex flex-col"
+                    >
+
+                        <img
+                            src="${escapeAttribute(
+                                item.image_url ||
+                                "https://via.placeholder.com/300"
+                            )}"
+                            class="menu-image"
+                            loading="lazy"
+                            alt=""
+                        >
+
+                        <div class="mt-2">
+
+                            <div
+                                class="font-bold text-sm text-gray-800"
+                            >
+                                ${escapeHTML(menuName)}
+                            </div>
+
+                            <div
+                                class="text-amber-800 font-extrabold mt-1"
+                            >
+                                ${formatPrice(item.price)} ฿
+                            </div>
+
+                        </div>
+
+
+                        ${toppingsHTML}
+
+
+                        <div
+                            id="selected-${menuIndex}"
+                            class="selected-count mt-2 min-h-[16px]"
+                        ></div>
+
+
+                        <button
+                            onclick="addToCart(${menuIndex})"
+                            class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-95 transition"
+                        >
+
+                            ➕ ${t("order")}
+
+                        </button>
+
+                    </div>
+
+                `;
+
+            }
+        ).join("");
+
+
+    /*
+     * Event listener แบบเดียว
+     * ช่วยลด onclick จำนวนมาก
+     */
+
+    container
+        .querySelectorAll(
+            ".topping-checkbox"
+        )
+        .forEach(
+            checkbox => {
+
+                checkbox.addEventListener(
+                    "change",
+                    updateSelectedCount
+                );
+
+            }
+        );
 
 }
 
 
-// =========================================================
-// Event Delegation
-//
-// มี listener เดียวสำหรับเมนูทั้งหมด
-// ช่วยลดภาระบนมือถือ/แท็บเล็ต
-// =========================================================
+/* =========================================================
+   TOPPING SELECTED COUNT
+========================================================= */
 
-document
-    .getElementById("menuContainer")
-    .addEventListener(
-        "click",
-        function(event) {
+function updateSelectedCount(event) {
 
-            const button =
-                event.target.closest(
-                    ".add-to-cart-btn"
-                );
+    const checkbox =
+        event.target;
+
+    const menuIndex =
+        checkbox.dataset.menuIndex;
+
+    const selected =
+        document.querySelectorAll(
+            input[data-menu-index="${menuIndex}"]:checked
+        );
+
+    const display =
+        document.getElementById(
+            selected-${menuIndex}
+        );
+
+    if (!display) return;
 
 
-            if (!button) {
-                return;
-            }
+    if (selected.length > 0) {
+
+        display.innerText =
+            ${t("selected")} ${selected.length};
+
+    } else {
+
+        display.innerText = "";
+
+    }
+
+}
 
 
-            const menuIndex =
+/* =========================================================
+   GET SELECTED TOPPINGS
+========================================================= */
+
+function getSelectedToppings(menuIndex) {
+
+    const selected =
+        document.querySelectorAll(
+            input[data-menu-index="${menuIndex}"]:checked
+        );
+
+    const toppings = [];
+
+    selected.forEach(
+        checkbox => {
+
+            const toppingIndex =
                 Number(
-                    button.dataset.menuIndex
+                    checkbox.dataset.toppingIndex
                 );
 
+            const topping =
+                toppingData[toppingIndex];
 
-            addToCart(
-                menuIndex,
-                button
-            );
+            if (topping) {
+
+                toppings.push({
+                    name: topping.name,
+                    name_my: topping.name_my || topping.name,
+                    name_zh: topping.name_zh || topping.name,
+                    name_en: topping.name_en || topping.name,
+                    price: Number(topping.price)
+                });
+
+            }
 
         }
     );
 
+    return toppings;
 
-// =========================================================
-// เพิ่มสินค้า
-// =========================================================
+}
 
-function addToCart(
-    menuIndex,
-    button
-) {
+
+/* =========================================================
+   ADD TO CART
+========================================================= */
+
+function addToCart(menuIndex) {
 
     const item =
         menuData[menuIndex];
 
-
-    if (!item) {
-        return;
-    }
+    if (!item) return;
 
 
-    const card =
-        button.closest(
-            ".menu-card"
-        );
-
-
-    const checked =
-        card.querySelectorAll(
-            ".topping-check:checked"
-        );
+    const toppings =
+        getSelectedToppings(menuIndex);
 
 
     let totalPrice =
-        Number(item.price || 0);
+        Number(item.price);
 
 
-    const selectedToppings = [];
-
-
-    // =====================================================
-    // อ่านท็อปปิ้งทั้งหมดที่เลือก
-    // =====================================================
-
-    checked.forEach(
-        checkbox => {
-
-            const index =
-                Number(
-                    checkbox.dataset.topIndex
-                );
-
-
-            const topping =
-                toppingData[index];
-
-
-            if (!topping) {
-                return;
-            }
-
-
-            const toppingPrice =
-                Number(
-                    topping.price || 0
-                );
-
+    toppings.forEach(
+        topping => {
 
             totalPrice +=
-                toppingPrice;
-
-
-            selectedToppings.push({
-
-                name:
-                    topping.name,
-
-                price:
-                    toppingPrice
-
-            });
+                Number(topping.price);
 
         }
     );
 
 
-    // =====================================================
-    // สร้างชื่อสินค้า
-    // =====================================================
+    /*
+     * เก็บข้อมูลสินค้าแบบละเอียด
+     * ไม่เอาท็อปปิ้งไปต่อท้ายชื่ออย่างเดียว
+     */
 
-    let displayName =
-        item.name;
+    const cartItem = {
+
+        menu_name: item.name,
+
+        menu_name_my:
+            item.name_my || item.name,
+
+        menu_name_zh:
+            item.name_zh || item.name,
+
+        menu_name_en:
+            item.name_en || item.name,
+
+        price: Number(item.price),
+
+        toppings: toppings,
+
+        total_price: totalPrice
+
+    };
 
 
-    if (
-        selectedToppings.length > 0
-    ) {
-
-        const toppingNames =
-            selectedToppings
-                .map(
-                    top =>
-                        top.name
-                )
-                .join(", ");
+    cart.push(cartItem);
 
 
-        displayName +=
-             (+${toppingNames});
+    /*
+     * สำคัญมาก
+     *
+     * หลังจากกดสั่งสินค้าแล้ว
+     * ล้างท็อปปิ้งของเมนูนี้ทันที
+     *
+     * ป้องกันลูกค้าคนถัดไป
+     * ได้ท็อปปิ้งของลูกค้าคนก่อน
+     */
 
-    }
-
-
-    // =====================================================
-    // เพิ่มลง Cart
-    // =====================================================
-
-    cart.push({
-
-        name:
-            displayName,
-
-        price:
-            totalPrice,
-
-        base_price:
-            Number(item.price || 0),
-
-        toppings:
-            selectedToppings
-
-    });
+    resetToppingsForMenu(
+        menuIndex
+    );
 
 
     updateCartUI();
 
+}
 
-    // =====================================================
-    // รีเซ็ต Checkbox ท็อปปิ้ง
-    // ของเมนูนี้ทันที
-    // =====================================================
 
-    checked.forEach(
+/* =========================================================
+   RESET TOPPINGS FOR ONE MENU
+========================================================= */
+
+function resetToppingsForMenu(menuIndex) {
+
+    const checkboxes =
+        document.querySelectorAll(
+            input[data-menu-index="${menuIndex}"]
+        );
+
+    checkboxes.forEach(
         checkbox => {
 
-            checkbox.checked =
-                false;
+            checkbox.checked = false;
 
         }
     );
 
 
-    // =====================================================
-    // Feedback ปุ่ม
-    // =====================================================
+    const display =
+        document.getElementById(
+            selected-${menuIndex}
+        );
 
-    const originalText =
-        button.innerText;
+    if (display) {
 
+        display.innerText = "";
 
-    button.innerText =
-        "✓";
-
-
-    button.disabled =
-        true;
-
-
-    setTimeout(
-        () => {
-
-            button.innerText =
-                originalText;
-
-            button.disabled =
-                false;
-
-        },
-        250
-    );
+    }
 
 }
 
 
-// =========================================================
-// อัปเดต Cart
-// =========================================================
+/* =========================================================
+   RESET ALL FORM
+========================================================= */
+
+function resetAllForm() {
+
+    /*
+     * ล้าง cart
+     */
+
+    cart = [];
+
+
+    /*
+     * ล้างท็อปปิ้งทุกเมนู
+     */
+
+    document
+        .querySelectorAll(
+            ".topping-checkbox"
+        )
+        .forEach(
+            checkbox => {
+
+                checkbox.checked = false;
+
+            }
+        );
+
+
+    /*
+     * ล้างตัวนับ topping
+     */
+
+    document
+        .querySelectorAll(
+            ".selected-count"
+        )
+        .forEach(
+            element => {
+
+                element.innerText = "";
+
+            }
+        );
+
+
+    /*
+     * คืนค่าชื่อลูกค้าเป็นค่าเริ่มต้น
+     */
+
+    document.getElementById(
+        "tableNo"
+    ).value =
+        currentLanguage === "th"
+            ? "สั่งกลับบ้าน"
+            : "";
+
+
+    updateCartUI();
+
+}
+
+
+/* =========================================================
+   GET DISPLAY MENU NAME
+========================================================= */
+
+function getCartMenuName(item) {
+
+    if (currentLanguage === "my") {
+
+        return item.menu_name_my ||
+               item.menu_name;
+
+    }
+
+    if (currentLanguage === "zh") {
+
+        return item.menu_name_zh ||
+               item.menu_name;
+
+    }
+
+    if (currentLanguage === "en") {
+
+        return item.menu_name_en ||
+               item.menu_name;
+
+    }
+
+    return item.menu_name;
+
+}
+
+
+/* =========================================================
+   GET DISPLAY TOPPING NAME
+========================================================= */
+
+function getCartToppingName(topping) {
+
+    if (currentLanguage === "my") {
+
+        return topping.name_my ||
+               topping.name;
+
+    }
+
+    if (currentLanguage === "zh") {
+
+        return topping.name_zh ||
+               topping.name;
+
+    }
+
+    if (currentLanguage === "en") {
+
+        return topping.name_en ||
+               topping.name;
+
+    }
+
+    return topping.name;
+
+}
+
+
+/* =========================================================
+   UPDATE CART UI
+========================================================= */
 
 function updateCartUI() {
 
@@ -1248,21 +1199,13 @@ function updateCartUI() {
         cart.length;
 
 
-    let total = 0;
-
-
-    for (
-        let i = 0;
-        i < cart.length;
-        i++
-    ) {
-
-        total +=
-            Number(
-                cart[i].price || 0
-            );
-
-    }
+    const total =
+        cart.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.total_price),
+            0
+        );
 
 
     document.getElementById(
@@ -1274,225 +1217,28 @@ function updateCartUI() {
     document.getElementById(
         "cartTotal"
     ).innerText =
-        total;
+        formatPrice(total);
+
+
+    document.getElementById(
+        "cartLabel"
+    ).innerHTML =
+        `${t("total")}
+        (<span id="cartCount">${count}</span>
+        <span id="itemText">${t("item")}</span>)`;
 
 }
 
 
-// =========================================================
-// รีเซ็ตท็อปปิ้งทั้งหมด
-// =========================================================
-
-function resetAllToppings() {
-
-    document
-        .querySelectorAll(
-            ".topping-check"
-        )
-        .forEach(
-            checkbox => {
-
-                checkbox.checked =
-                    false;
-
-            }
-        );
-
-}
-
-
-// =========================================================
-// ลบสินค้า
-// =========================================================
-
-function removeFromCart(index) {
-
-    if (
-        index < 0 ||
-        index >= cart.length
-    ) {
-
-        return;
-
-    }
-
-
-    cart.splice(
-        index,
-        1
-    );
-
-
-    updateCartUI();
-
-    renderCartModal();
-
-}
-
-
-// =========================================================
-// ล้าง Cart
-// =========================================================
-
-function clearCart() {
-
-    cart = [];
-
-
-    resetAllToppings();
-
-
-    updateCartUI();
-
-    renderCartModal();
-
-    closeCartModal();
-
-}
-
-
-// =========================================================
-// เปิด Cart
-// =========================================================
-
-function openCartModal() {
-
-    renderCartModal();
-
-
-    document
-        .getElementById(
-            "cartModal"
-        )
-        .classList
-        .remove("hidden");
-
-}
-
-
-// =========================================================
-// ปิด Cart
-// =========================================================
-
-function closeCartModal() {
-
-    document
-        .getElementById(
-            "cartModal"
-        )
-        .classList
-        .add("hidden");
-
-}
-
-
-// =========================================================
-// แสดง Cart
-// =========================================================
-
-function renderCartModal() {
-
-    const container =
-        document.getElementById(
-            "cartItemsList"
-        );
-
-
-    const t =
-        i18n[currentLang];
-
-
-    if (
-        cart.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div
-                class="text-center text-gray-400 py-8 text-sm"
-            >
-                ${t.emptyCartText}
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-    let html = "";
-
-
-    for (
-        let i = 0;
-        i < cart.length;
-        i++
-    ) {
-
-        const item =
-            cart[i];
-
-
-        html += `
-
-            <div
-                class="flex justify-between items-center py-3"
-            >
-
-                <div
-                    class="pr-2 text-left"
-                >
-
-                    <div
-                        class="font-bold text-sm text-gray-800"
-                    >
-                        ${escapeHTML(item.name)}
-                    </div>
-
-                    <div
-                        class="text-xs text-amber-800 font-semibold mt-1"
-                    >
-                        ${Number(item.price)} ฿
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    onclick="removeFromCart(${i})"
-                    class="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-bold"
-                >
-                    ❌
-                </button>
-
-            </div>
-
-        `;
-
-    }
-
-
-    container.innerHTML =
-        html;
-
-}
-
-
-// =========================================================
-// ส่งออเดอร์
-// =========================================================
+/* =========================================================
+   SUBMIT ORDER
+========================================================= */
 
 async function submitOrder() {
 
-    if (isSubmitting) {
+    if (submitting) {
         return;
     }
-
-
-    const t =
-        i18n[currentLang];
 
 
     const tableNo =
@@ -1503,69 +1249,51 @@ async function submitOrder() {
 
     if (!tableNo) {
 
-        alert(
-            t.alertName
-        );
+        alert(t("enterCustomer"));
 
         return;
 
     }
 
 
-    if (
-        cart.length === 0
-    ) {
+    if (cart.length === 0) {
 
-        alert(
-            t.alertEmpty
-        );
+        alert(t("emptyCart"));
 
         return;
 
     }
 
 
-    let total = 0;
+    const total =
+        cart.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.total_price),
+            0
+        );
 
 
-    for (
-        let i = 0;
-        i < cart.length;
-        i++
-    ) {
-
-        total +=
-            Number(
-                cart[i].price || 0
-            );
-
-    }
+    submitting = true;
 
 
-    // =====================================================
-    // ป้องกันกดส่งซ้ำ
-    // =====================================================
-
-    isSubmitting =
-        true;
-
-
-    const submitButton =
+    const button =
         document.getElementById(
-            "ui-submit-btn"
+            "submitButton"
         );
 
 
-    const oldText =
-        submitButton.innerText;
+    button.disabled = true;
+
+    button.classList.add(
+        "opacity-60"
+    );
 
 
-    submitButton.disabled =
-        true;
-
-
-    submitButton.innerText =
-        "⏳";
+    document.getElementById(
+        "submitText"
+    ).innerText =
+        t("sending");
 
 
     try {
@@ -1574,9 +1302,7 @@ async function submitOrder() {
             await fetch(
                 "/api/order",
                 {
-
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -1601,117 +1327,75 @@ async function submitOrder() {
             );
 
 
-        const result =
+        const data =
             await response.json();
 
 
-        if (
-            !response.ok ||
-            !result.success
-        ) {
+        if (!response.ok ||
+            !data.success) {
 
             throw new Error(
-                result.error ||
-                "Order failed"
+                data.error ||
+                "Order error"
             );
 
         }
 
 
-        // =================================================
-        // สำเร็จ
-        // =================================================
+        /*
+         * สำเร็จแล้ว
+         *
+         * ล้างทุกอย่าง
+         */
+
+        resetAllForm();
+
+
+        alert(t("success"));
+
+
+    } catch (error) {
+
+        console.error(error);
 
         alert(
-            t.alertSuccess
+            t("error") +
+            "\n" +
+            error.message
         );
 
+    } finally {
 
-        // ล้าง Cart
+        submitting = false;
 
-        cart = [];
+        button.disabled = false;
 
-
-        // รีเซ็ตท็อปปิ้งทั้งหมด
-
-        resetAllToppings();
-
-
-        // อัปเดตหน้าจอ
-
-        updateCartUI();
-
-        renderCartModal();
-
-        closeCartModal();
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
+        button.classList.remove(
+            "opacity-60"
         );
 
-
-        alert(
-            t.alertErr
-        );
-
-    }
-
-    finally {
-
-        isSubmitting =
-            false;
-
-
-        submitButton.disabled =
-            false;
-
-
-        submitButton.innerText =
-            oldText;
+        document.getElementById(
+            "submitText"
+        ).innerText =
+            t("confirm");
 
     }
 
 }
 
 
-// =========================================================
-// ปิด Modal เมื่อกดด้านนอก
-// =========================================================
+/* =========================================================
+   FORMAT PRICE
+========================================================= */
 
-document
-    .getElementById(
-        "cartModal"
-    )
-    .addEventListener(
-        "click",
-        function(event) {
+function formatPrice(price) {
 
-            if (
-                event.target ===
-                this
-            ) {
+    const number =
+        Number(price) || 0;
 
-                closeCartModal();
-
+    return number
+        .toLocaleString(
+            "en-US",
+            {
+                maximumFractionDigits: 2
             }
-
-        }
-    );
-
-
-// =========================================================
-// เริ่มระบบ
-// =========================================================
-
-loadInitData();
-
-</script>
-
-</body>
-
-</html>
