@@ -1,17 +1,37 @@
 from flask import Flask, jsonify, request, render_template
 import psycopg2
+from psycopg2 import pool
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 
 DB_URL = os.environ.get("DATABASE_URL")
 
+# สร้าง Connection Pool เพื่อรองรับ Traffic และไม่ให้ Connection เต็ม
+db_pool = None
+if DB_URL:
+    try:
+        db_pool = pool.SimpleConnectionPool(1, 10, DB_URL, sslmode='require')
+    except Exception as e:
+        print("Pool Error:", e)
+
 def get_db():
+    if db_pool:
+        return db_pool.getconn()
     if not DB_URL:
         raise Exception("ไม่พบ DATABASE_URL")
     return psycopg2.connect(DB_URL, sslmode='require')
+
+def release_db(conn):
+    if db_pool and conn:
+        db_pool.putconn(conn)
+    elif conn:
+        conn.close()
+
+# ตั้งค่า Timezone เป็นประเทศไทย (UTC+7)
+THAILAND_TZ = timezone(timedelta(hours=7))
 
 @app.route("/api/init-data", methods=["GET"])
 def get_init_data():
@@ -75,7 +95,7 @@ def get_init_data():
 
     finally:
         if conn:
-            conn.close()
+            release_db(conn)
 
 @app.route("/api/order", methods=["POST"])
 def create_order():
@@ -85,28 +105,27 @@ def create_order():
         table_number = str(data.get("table_number", "")).strip()
         cart = data.get("cart", [])
         total_price = float(data.get("total_price", 0))
-        order_date_str = data.get("order_date")  # รับค่าวันที่จากฝั่งสั่งอาหาร (รูปแบบ YYYY-MM-DD)
+        order_date_str = data.get("order_date")
 
         if not table_number:
             return jsonify({"success": False, "error": "กรุณากรอกชื่อ/คิว"}), 400
         if not cart:
             return jsonify({"success": False, "error": "ยังไม่มีรายการสินค้า"}), 400
 
-        # จัดการเรื่องวันที่และเวลาบันทึก
-        current_time = datetime.now().time()
+        # ใช้เวลาประเทศไทย (UTC+7)
+        now_th = datetime.now(THAILAND_TZ)
         if order_date_str:
             try:
                 selected_date = datetime.strptime(order_date_str, "%Y-%m-%d").date()
-                created_at = datetime.combine(selected_date, current_time)
+                created_at = datetime.combine(selected_date, now_th.time())
             except ValueError:
-                created_at = datetime.now()
+                created_at = now_th.replace(tzinfo=None)
         else:
-            created_at = datetime.now()
+            created_at = now_th.replace(tzinfo=None)
 
         conn = get_db()
         cursor = conn.cursor()
         
-        # คำนวณราคาทุนรวม (Cost)
         total_cost = sum(float(item.get("cost", 0)) for item in cart)
 
         cursor.execute(
@@ -128,7 +147,7 @@ def create_order():
 
     finally:
         if conn:
-            conn.close()
+            release_db(conn)
 
 @app.route("/")
 def home():
