@@ -10,7 +10,9 @@
 html,body{margin:0;padding:0;background:#F4EFEA;font-family:Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{padding:10px;padding-bottom:105px}
 button,input,label{touch-action:manipulation}
-.menu-card{
+
+/* เพิ่ม CSS Optimize สำหรับการเรนเดอร์ให้ลื่นไหล */
+.menu-card {
   background:#fff;
   border-radius:14px;
   border:1.5px solid #C8B2A2;
@@ -18,32 +20,31 @@ button,input,label{touch-action:manipulation}
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  will-change:transform;
-  contain:content;
+  contain: content; /* กักบริเวณการเรนเดอร์ไม่ให้กระทบทั้งหน้า */
+  will-change: transform;
 }
-.menu-image{
+.menu-image {
   width:100%;
   height:110px;
-  aspect-ratio:1 / 1;
-  object-fit:contain;
+  object-fit:cover;
   background:#fafafa;
-  border-radius:10px;
+  border-radius:10px 10px 0 0;
 }
-.topping-box{border:1px solid #ddd;border-radius:9px;background:#fafafa;overflow:hidden}
-.topping-list-container{max-height:140px;overflow-y:auto}
-.topping-list-container::-webkit-scrollbar{width:4px}
-.topping-list-container::-webkit-scrollbar-thumb{background:#c8b2a2;border-radius:4px}
-.topping-item{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #eee;cursor:pointer}
-.topping-item:last-child{border-bottom:0}
-.topping-checkbox{width:20px;height:20px;flex-shrink:0}
 .order-button{min-height:42px}
 .language-button{min-width:62px;min-height:40px}
-.selected-count{font-size:11px;color:#92400e;font-weight:bold}
 .loading{text-align:center;padding:40px 10px;color:#777}
+
+.topping-item-modal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
 @media (min-width:768px){
- body{padding:16px;padding-bottom:115px}
- .menu-image{height:140px}
- .topping-item{padding:8px 7px}
+  body{padding:16px;padding-bottom:115px}
+  .menu-image{height:140px}
 }
 </style>
 </head>
@@ -68,22 +69,17 @@ button,input,label{touch-action:manipulation}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
   <div>
     <label id="dateLabel" class="block text-xs text-gray-600 mb-1 font-bold">📅 วันที่สั่งซื้อ:</label>
-    <input id="orderDate" type="date"
-           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm font-semibold text-gray-700">
+    <input id="orderDate" type="date" class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm font-semibold text-gray-700">
   </div>
 
   <div>
     <label id="customerLabel" class="block text-xs text-gray-600 mb-1 font-bold">👤 ชื่อลูกค้า/คิว:</label>
-    <input id="tableNo" type="text" value="สั่งกลับบ้าน"
-           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
-           placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
+    <input id="tableNo" type="text" value="สั่งกลับบ้าน" class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm" placeholder="ระบุชื่อลูกค้า/คิว" autocomplete="off">
   </div>
 
   <div>
     <label id="searchLabel" class="block text-xs text-gray-600 mb-1 font-bold">🔍 ค้นหาเมนู:</label>
-    <input id="searchInput" type="text" oninput="filterMenu()"
-           class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm"
-           placeholder="ค้นหา..." autocomplete="off">
+    <input id="searchInput" type="text" oninput="filterMenuFast()" class="w-full p-2.5 border border-amber-300 rounded-xl text-sm bg-white shadow-sm" placeholder="ค้นหา..." autocomplete="off">
   </div>
 </div>
 
@@ -91,6 +87,7 @@ button,input,label{touch-action:manipulation}
   <div class="loading col-span-full">กำลังโหลดเมนู...</div>
 </div>
 
+<!-- Floating Bottom Bar -->
 <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-40">
   <div class="max-w-7xl mx-auto flex justify-between items-center gap-3">
     <div onclick="openCartModal()" class="cursor-pointer flex-1">
@@ -100,24 +97,45 @@ button,input,label{touch-action:manipulation}
       </div>
       <div class="text-xl font-bold text-amber-900"><span id="cartTotal">0</span> ฿</div>
     </div>
-    <button id="submitButton" onclick="submitOrder()"
-            class="bg-amber-800 text-white px-5 py-3 rounded-xl font-bold active:scale-95 transition">
+    <button id="submitButton" onclick="submitOrder()" class="bg-amber-800 text-white px-5 py-3 rounded-xl font-bold active:scale-95 transition">
       🚀 <span id="submitText">ยืนยันสั่งซื้อ</span>
     </button>
   </div>
 </div>
 
+<!-- Modal เลือกท็อปปิ้ง (ช่วยลด DOM บน iPad ได้เยอะมาก) -->
+<div id="toppingModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col shadow-2xl">
+    <div class="flex justify-between items-center pb-2 border-b">
+      <div>
+        <h3 class="font-bold text-lg text-amber-900" id="toppingModalTitle">เมนู</h3>
+        <p class="text-xs text-amber-700" id="toppingModalSub">เลือกท็อปปิ้ง</p>
+      </div>
+      <button onclick="closeToppingModal()" class="text-gray-400 text-2xl font-bold p-1">&times;</button>
+    </div>
+    
+    <div id="toppingModalList" class="overflow-y-auto my-2 flex-1"></div>
+
+    <div class="pt-2 border-t flex gap-2">
+      <button onclick="confirmAddToCart()" class="w-full bg-amber-800 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition">
+        ➕ ใส่ตะกร้า
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ตะกร้าสินค้า -->
 <div id="cartModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
   <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col shadow-2xl">
     <div class="flex justify-between items-center pb-3 border-b">
       <h3 class="font-bold text-lg text-amber-900" id="cartModalTitle">🛒 รายการที่เลือก</h3>
-      <button onclick="closeCartModal()" class="text-gray-400 text-2xl font-bold hover:text-gray-600 px-2">&times;</button>
+      <button onclick="closeCartModal()" class="text-gray-400 text-2xl font-bold p-1">&times;</button>
     </div>
     
     <div id="cartItemsList" class="overflow-y-auto my-3 flex-1 divide-y"></div>
 
     <div class="pt-3 border-t flex gap-2">
-      <button onclick="clearCart()" class="w-1/3 bg-red-100 text-red-700 font-bold py-2.5 rounded-xl text-sm hover:bg-red-200">
+      <button onclick="clearCart()" class="w-1/3 bg-red-100 text-red-700 font-bold py-2.5 rounded-xl text-sm">
         🗑️ ล้างทั้งหมด
       </button>
       <button onclick="closeCartModal()" class="w-2/3 bg-amber-800 text-white font-bold py-2.5 rounded-xl text-sm">
@@ -135,9 +153,9 @@ let toppingData = [];
 let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
+let activeMenuIndex = null; // บันทึกเมนูที่กำลังเลือกท็อปปิ้ง
 
 const translationCache = {};
-const menuCache = new Map();
 
 const itemDictionary = {
   "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "ပုလဲနက်" },
@@ -154,7 +172,7 @@ const translations = {
     title:"🧋 สั่งเครื่องดื่ม", subtitle:"สั่งกลับบ้าน", language:"ภาษา / Language",
     dateLabel:"📅 วันที่สั่งซื้อ:", customerLabel:"👤 ชื่อลูกค้า/คิว:", searchLabel:"🔍 ค้นหาเมนู:",
     customerPlaceholder:"ระบุชื่อลูกค้า/คิว", searchPlaceholder:"ค้นหา...", noTopping:"ไม่ใส่ท็อปปิ้ง",
-    selectTopping:"เลือกท็อปปิ้ง", selected:"เลือกแล้ว", order:"สั่ง", total:"ราคารวม",
+    selectTopping:"เลือกท็อปปิ้ง", order:"สั่ง", total:"ราคารวม",
     item:"รายการ", confirm:"ยืนยันสั่งซื้อ", loading:"กำลังโหลดเมนู...",
     loadingError:"โหลดข้อมูลเมนูไม่สำเร็จ", enterCustomer:"กรุณากรอกชื่อ/คิว",
     emptyCart:"ยังไม่ได้เลือกรายการ", success:"🎉 ส่งออเดอร์เรียบร้อย!",
@@ -166,7 +184,7 @@ const translations = {
     title:"🧋 အဖျော်ယမကာ မှာယူရန်", subtitle:"အိမ်ယူရန်", language:"ဘာသာစကား / Language",
     dateLabel:"📅 ရက်စွဲ:", customerLabel:"👤 အမည် / ကူပွန်:", searchLabel:"🔍 ရှာရန်:",
     customerPlaceholder:"ဖောက်သည်အမည် / နံပါတ်", searchPlaceholder:"ရှာရန်...", noTopping:"Topping မထည့်ပါ",
-    selectTopping:"Topping ရွေးမည်", selected:"ရွေးထားသည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
+    selectTopping:"Topping ရွေးမည်", order:"မှာယူမည်", total:"စုစုပေါင်း",
     item:"รายการ", confirm:"အော်ဒါတင်မည်", loading:"မီနူးများ ဖွင့်နေသည်...",
     loadingError:"မီနူးဒေတာ ဖွင့်၍မရပါ", enterCustomer:"ဖောက်သည်အမည် / နံပါတ် ထည့်ပါ",
     emptyCart:"ပစ္စည်းမရွေးရသေးပါ", success:"🎉 အော်ဒါတင်ပြီးပါပြီ!",
@@ -178,7 +196,7 @@ const translations = {
     title:"🧋 饮料点单", subtitle:"外带", language:"语言 / Language",
     dateLabel:"📅 点单日期:", customerLabel:"👤 顾客姓名/号码:", searchLabel:"🔍 搜索飲料:",
     customerPlaceholder:"请输入顾客姓名/号码", searchPlaceholder:"搜索...", noTopping:"不加配料",
-    selectTopping:"选择配料", selected:"已选择", order:"下单", total:"总价", item:"项",
+    selectTopping:"选择配料", order:"下单", total:"总价", item:"项",
     confirm:"确认下单", loading:"กำลัง加载菜单...", loadingError:"菜单加载失败",
     enterCustomer:"请输入顾客姓名/号码", emptyCart:"还没有选择商品",
     success:"🎉 订单提交成功！", error:"订单提交失败", sending:"正在提交...",
@@ -189,7 +207,7 @@ const translations = {
     title:"🧋 Drink Order", subtitle:"Take Away", language:"Language",
     dateLabel:"📅 Order Date:", customerLabel:"👤 Name / Queue:", searchLabel:"🔍 Search:",
     customerPlaceholder:"Customer name / Queue", searchPlaceholder:"Search...", noTopping:"No toppings",
-    selectTopping:"Select Toppings", selected:"Selected", order:"Order", total:"Total",
+    selectTopping:"Select Toppings", order:"Order", total:"Total",
     item:"items", confirm:"Confirm Order", loading:"Loading menu...",
     loadingError:"Unable to load menu", enterCustomer:"Please enter customer name / queue",
     emptyCart:"Please select an item", success:"🎉 Order submitted successfully!",
@@ -200,40 +218,30 @@ const translations = {
 };
 
 function t(key){
-  return (translations[currentLanguage] && translations[currentLanguage][key])
-      || translations.th[key] || key;
+  return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.th[key] || key;
 }
 
 function setDefaultDate() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById("orderDate").value = today;
+  document.getElementById("orderDate").value = new Date().toISOString().split('T')[0];
 }
 
 async function batchTranslateTexts(texts, targetLang) {
   if (!texts.length || targetLang === "th") return {};
-  
   const langCode = targetLang === "my" ? "my" : targetLang;
   const missingTexts = texts.filter(t => !translationCache[`${t}_${langCode}`] && !itemDictionary[t]?.[targetLang]);
   
   if (missingTexts.length > 0) {
-    const combinedText = missingTexts.join(" ||| ");
     try {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(combinedText)}`;
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=${langCode}&dt=t&q=${encodeURIComponent(missingTexts.join(" ||| "))}`;
       const response = await fetch(url);
       const result = await response.json();
-      
       if (result && result[0]) {
-        const fullTranslatedText = result[0].map(item => item[0]).join('');
-        const translatedArray = fullTranslatedText.split("|||");
-        
+        const translatedArray = result[0].map(item => item[0]).join('').split("|||");
         missingTexts.forEach((originalText, index) => {
-          const translated = translatedArray[index] ? translatedArray[index].trim() : originalText;
-          translationCache[`${originalText}_${langCode}`] = translated;
+          translationCache[`${originalText}_${langCode}`] = translatedArray[index] ? translatedArray[index].trim() : originalText;
         });
       }
-    } catch (e) {
-      console.warn("Batch translate error:", e);
-    }
+    } catch (e) { console.warn("Translate Error:", e); }
   }
 
   const resultMap = {};
@@ -245,32 +253,12 @@ async function batchTranslateTexts(texts, targetLang) {
 
 function getMenuName(item){
   if(currentLanguage === "th") return item.name;
-  
-  const cacheKey = `${item.name}_${currentLanguage}`;
-  if (menuCache.has(cacheKey)) return menuCache.get(cacheKey);
-
-  const translated = itemDictionary[item.name]?.[currentLanguage] 
-                  || translationCache[`${item.name}_${currentLanguage}`] 
-                  || item[`name_${currentLanguage}`] 
-                  || item.name;
-
-  menuCache.set(cacheKey, translated);
-  return translated;
+  return itemDictionary[item.name]?.[currentLanguage] || translationCache[`${item.name}_${currentLanguage}`] || item.name;
 }
 
 function getToppingName(item){
   if(currentLanguage === "th") return item.name;
-
-  const cacheKey = `topping_${item.name}_${currentLanguage}`;
-  if (menuCache.has(cacheKey)) return menuCache.get(cacheKey);
-
-  const translated = itemDictionary[item.name]?.[currentLanguage] 
-                  || translationCache[`${item.name}_${currentLanguage}`] 
-                  || item[`name_${currentLanguage}`] 
-                  || item.name;
-
-  menuCache.set(cacheKey, translated);
-  return translated;
+  return itemDictionary[item.name]?.[currentLanguage] || translationCache[`${item.name}_${currentLanguage}`] || item.name;
 }
 
 async function changeLanguage(language){
@@ -280,22 +268,20 @@ async function changeLanguage(language){
   updateStaticTexts();
   
   if(language !== "th") {
-    const allTexts = [];
-    menuData.forEach(m => allTexts.push(m.name));
-    toppingData.forEach(t => allTexts.push(t.name));
+    const allTexts = [...menuData.map(m => m.name), ...toppingData.map(t => t.name)];
     await batchTranslateTexts(allTexts, language);
   }
-  
   renderMenu();
 }
 
 function updateLanguageButtons(){
   ["th","my","zh","en"].forEach(lang=>{
     const button=document.getElementById(`lang-${lang}`);
-    if(!button) return;
-    button.className = lang===currentLanguage
-      ? "language-button rounded-lg border font-bold text-sm bg-amber-800 text-white"
-      : "language-button rounded-lg border font-bold text-sm bg-white";
+    if(button) {
+      button.className = lang===currentLanguage
+        ? "language-button rounded-lg border font-bold text-sm bg-amber-800 text-white"
+        : "language-button rounded-lg border font-bold text-sm bg-white";
+    }
   });
 }
 
@@ -315,163 +301,125 @@ function updateStaticTexts(){
 
 async function loadInitData(){
   try{
-    const response=await fetch("/api/init-data",{method:"GET",cache:"no-store"});
-    const data=await response.json();
+    const response = await fetch("/api/init-data",{method:"GET",cache:"no-store"});
+    const data = await response.json();
     if(!response.ok || !data.success) throw new Error(data.error || "Load error");
 
-    menuData=Array.isArray(data.menu) ? data.menu : [];
-    toppingData=Array.isArray(data.toppings) ? data.toppings : [];
+    menuData = Array.isArray(data.menu) ? data.menu : [];
+    toppingData = Array.isArray(data.toppings) ? data.toppings : [];
     
     if(currentLanguage !== "th") {
-      const allTexts = [];
-      menuData.forEach(m => allTexts.push(m.name));
-      toppingData.forEach(t => allTexts.push(t.name));
+      const allTexts = [...menuData.map(m => m.name), ...toppingData.map(t => t.name)];
       await batchTranslateTexts(allTexts, currentLanguage);
     }
-    
     renderMenu();
   }catch(error){
     console.error(error);
-    document.getElementById("menuContainer").innerHTML=
-      `<div class="col-span-full text-center p-10 text-red-600">❌ ${escapeHTML(t("loadingError"))}</div>`;
+    document.getElementById("menuContainer").innerHTML = `<div class="col-span-full text-center p-10 text-red-600">❌ ${escapeHTML(t("loadingError"))}</div>`;
   }
 }
 
-function filterMenu() {
-  renderMenu();
+// ค้นหาแบบรวดเร็ว ไม่ทำลาย DOM
+function filterMenuFast() {
+  const keyword = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+  const cards = document.querySelectorAll('.menu-card');
+  
+  cards.forEach(card => {
+    const name = card.getAttribute('data-name').toLowerCase();
+    if (name.includes(keyword)) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
 }
 
 function renderMenu(){
-  const container=document.getElementById("menuContainer");
-  const keyword = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
-
+  const container = document.getElementById("menuContainer");
   if(!menuData.length){
-    container.innerHTML=`<div class="col-span-full loading">${escapeHTML(t("loadingError"))}</div>`;
+    container.innerHTML = `<div class="col-span-full loading">${escapeHTML(t("loadingError"))}</div>`;
     return;
   }
 
-  const filteredMenu = menuData.map((item, originalIndex) => ({ item, originalIndex }))
-    .filter(({ item }) => {
-      if(!keyword) return true;
-      const originalName = item.name.toLowerCase();
-      const translatedName = getMenuName(item).toLowerCase();
-      return originalName.includes(keyword) || translatedName.includes(keyword);
-    });
-
-  if(!filteredMenu.length){
-    container.innerHTML=`<div class="col-span-full text-center py-10 text-gray-500">${escapeHTML(t("noMenuFound"))}</div>`;
-    return;
-  }
-
-  container.innerHTML=filteredMenu.map(({ item, originalIndex })=>{
-    const menuIndex = originalIndex;
-    const toppingsHTML=toppingData.length
-      ? `<div class="topping-box mt-2">
-           <button type="button" onclick="toggleTopping(${menuIndex})"
-                   class="w-full text-xs font-bold text-amber-800 p-2 text-left flex justify-between items-center bg-amber-50 hover:bg-amber-100 transition">
-             <span>➕ ${escapeHTML(t("selectTopping"))}</span>
-             <span id="topping-arrow-${menuIndex}" class="text-amber-700 text-sm font-normal">▼</span>
-           </button>
-           <div id="topping-list-${menuIndex}" class="hidden border-t topping-list-container">
-             ${toppingData.map((top,topIndex)=>`
-               <label class="topping-item">
-                 <input type="checkbox" class="topping-checkbox"
-                        data-menu-index="${menuIndex}" data-topping-index="${topIndex}">
-                 <span id="topping-name-${menuIndex}-${topIndex}" class="text-xs flex-1">${escapeHTML(getToppingName(top))}</span>
-                 <span class="text-xs text-amber-700 whitespace-nowrap">+${formatPrice(top.price)} ฿</span>
-               </label>
-             `).join("")}
-           </div>
-         </div>`
-      : `<div class="text-xs text-gray-400 mt-2">${escapeHTML(t("noTopping"))}</div>`;
-
+  // สร้างเฉพาะการ์ดเมนูเบาๆ ไม่ใส่ Topping DOM ซ้ำๆ
+  container.innerHTML = menuData.map((item, index) => {
+    const name = getMenuName(item);
     return `
-      <div class="menu-card p-2">
+      <div class="menu-card p-2" data-name="${escapeAttribute(name)} ${escapeAttribute(item.name)}">
         <div>
-          <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
-               class="menu-image" loading="lazy" decoding="async" alt="">
-          <div class="mt-2">
-            <div id="menu-name-${menuIndex}" class="font-bold text-sm text-gray-800 line-clamp-1">${escapeHTML(getMenuName(item))}</div>
-            <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
+          <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}" class="menu-image" loading="lazy" alt="">
+          <div class="p-1">
+            <div class="font-bold text-sm text-gray-800 line-clamp-1 mt-1">${escapeHTML(name)}</div>
+            <div class="text-amber-800 font-extrabold mt-0.5">${formatPrice(item.price)} ฿</div>
           </div>
-          ${toppingsHTML}
-          <div id="selected-${menuIndex}" class="selected-count mt-1.5 min-h-[16px]"></div>
         </div>
-        <button onclick="addToCart(${menuIndex})"
-                class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:bg-amber-900 active:scale-95 transition">
+        <button onclick="openToppingModal(${index})" class="order-button w-full bg-amber-800 text-white text-sm font-bold py-2 rounded-lg mt-2 active:scale-95 transition">
           ➕ ${escapeHTML(t("order"))}
         </button>
       </div>`;
   }).join("");
-
-  container.querySelectorAll(".topping-checkbox").forEach(cb=>{
-    cb.addEventListener("change",updateSelectedCount);
-  });
 }
 
-function toggleTopping(menuIndex){
-  const list = document.getElementById(`topping-list-${menuIndex}`);
-  const arrow = document.getElementById(`topping-arrow-${menuIndex}`);
-  if(!list) return;
-
-  if(list.classList.contains("hidden")){
-    list.classList.remove("hidden");
-    if(arrow) arrow.innerText = "▲";
-  } else {
-    list.classList.add("hidden");
-    if(arrow) arrow.innerText = "▼";
-  }
-}
-
-function updateSelectedCount(event){
-  const menuIndex=event.target.dataset.menuIndex;
-  const selected=document.querySelectorAll(
-    `input[data-menu-index="${menuIndex}"]:checked`
-  );
-  const display=document.getElementById(`selected-${menuIndex}`);
-  if(display) display.innerText=selected.length ? `${t("selected")} ${selected.length}` : "";
-}
-
-function getSelectedToppings(menuIndex){
-  const selected=document.querySelectorAll(
-    `input[data-menu-index="${menuIndex}"]:checked`
-  );
-
-  return Array.from(selected).map(cb=>{
-    const topping=toppingData[Number(cb.dataset.toppingIndex)];
-    if(!topping) return null;
-    return {
-      name:topping.name,
-      price:Number(topping.price)
-    };
-  }).filter(Boolean);
-}
-
-function addToCart(menuIndex){
-  const item=menuData[menuIndex];
+// ระบบเลือก ท็อปปิ้ง ผ่าน Modal
+function openToppingModal(index) {
+  activeMenuIndex = index;
+  const item = menuData[index];
   if(!item) return;
 
-  const toppings=getSelectedToppings(menuIndex);
-  const totalPrice=Number(item.price)+toppings.reduce((sum,t)=>sum+Number(t.price),0);
+  document.getElementById("toppingModalTitle").innerText = getMenuName(item);
+  document.getElementById("toppingModalSub").innerText = `${formatPrice(item.price)} ฿`;
+  
+  const listContainer = document.getElementById("toppingModalList");
+  if(!toppingData.length) {
+    listContainer.innerHTML = `<div class="text-center text-gray-400 py-4">${t("noTopping")}</div>`;
+  } else {
+    listContainer.innerHTML = toppingData.map((top, tIdx) => `
+      <label class="topping-item-modal cursor-pointer hover:bg-amber-50 rounded-lg">
+        <div class="flex items-center gap-3">
+          <input type="checkbox" class="topping-modal-cb w-5 h-5 text-amber-800 rounded" value="${tIdx}">
+          <span class="text-sm font-medium text-gray-700">${escapeHTML(getToppingName(top))}</span>
+        </div>
+        <span class="text-xs font-bold text-amber-800">+${formatPrice(top.price)} ฿</span>
+      </label>
+    `).join("");
+  }
 
-  cart.push({
-    menu_name:item.name,
-    price:Number(item.price),
-    toppings:toppings,
-    total_price:totalPrice
+  document.getElementById("toppingModal").classList.remove("hidden");
+}
+
+function closeToppingModal() {
+  document.getElementById("toppingModal").classList.add("hidden");
+  activeMenuIndex = null;
+}
+
+function confirmAddToCart() {
+  if (activeMenuIndex === null) return;
+  const item = menuData[activeMenuIndex];
+  
+  const selectedToppings = [];
+  document.querySelectorAll('.topping-modal-cb:checked').forEach(cb => {
+    const top = toppingData[Number(cb.value)];
+    if(top) selectedToppings.push({ name: top.name, price: Number(top.price) });
   });
 
-  resetToppingsForMenu(menuIndex);
+  const totalPrice = Number(item.price) + selectedToppings.reduce((sum, t) => sum + Number(t.price), 0);
+
+  cart.push({
+    menu_name: item.name,
+    price: Number(item.price),
+    toppings: selectedToppings,
+    total_price: totalPrice
+  });
+
   updateCartUI();
+  closeToppingModal();
 }
 
 function removeFromCart(index){
   cart.splice(index, 1);
   updateCartUI();
   renderCartModal();
-  if(!cart.length){
-    closeCartModal();
-  }
+  if(!cart.length) closeCartModal();
 }
 
 function clearCart(){
@@ -508,120 +456,73 @@ function renderCartModal(){
           ${toppingsList ? `<div class="text-xs text-amber-700 mt-0.5">+ ${escapeHTML(toppingsList)}</div>` : ''}
           <div class="text-xs font-bold text-amber-900 mt-1">${formatPrice(item.total_price)} ฿</div>
         </div>
-        <button onclick="removeFromCart(${index})" 
-                class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-200 hover:bg-red-100 active:scale-95 transition">
+        <button onclick="removeFromCart(${index})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-200">
           🗑️ ${t("remove")}
         </button>
-      </div>
-    `;
+      </div>`;
   }).join("");
 }
 
-function resetToppingsForMenu(menuIndex){
-  document.querySelectorAll(`input[data-menu-index="${menuIndex}"]`).forEach(cb=>cb.checked=false);
-  const display=document.getElementById(`selected-${menuIndex}`);
-  if(display) display.innerText="";
-
-  const list = document.getElementById(`topping-list-${menuIndex}`);
-  const arrow = document.getElementById(`topping-arrow-${menuIndex}`);
-  if(list) list.classList.add("hidden");
-  if(arrow) arrow.innerText = "▼";
-}
-
-function resetAllForm(){
-  cart=[];
-  document.querySelectorAll(".topping-checkbox").forEach(cb=>cb.checked=false);
-  document.querySelectorAll(".selected-count").forEach(el=>el.innerText="");
-
-  menuData.forEach((_, idx) => {
-    const list = document.getElementById(`topping-list-${idx}`);
-    const arrow = document.getElementById(`topping-arrow-${idx}`);
-    if(list) list.classList.add("hidden");
-    if(arrow) arrow.innerText = "▼";
-  });
-
-  const input=document.getElementById("tableNo");
-  input.value=currentLanguage==="th" ? "สั่งกลับบ้าน" : "";
-  document.getElementById("searchInput").value = "";
-  setDefaultDate();
-
-  updateCartUI();
-}
-
 function updateCartUI(){
-  const count=cart.length;
-  const total=cart.reduce((sum,item)=>sum+Number(item.total_price),0);
+  const count = cart.length;
+  const total = cart.reduce((sum, item) => sum + Number(item.total_price), 0);
 
-  document.getElementById("cartLabel").innerHTML=
+  document.getElementById("cartLabel").innerHTML =
     `<span>${escapeHTML(t("total"))} (<span id="cartCount">${count}</span> ${escapeHTML(t("item"))})</span> <span class="text-[10px] text-amber-800 font-bold">${t("viewDelete")}</span>`;
-  document.getElementById("cartTotal").innerText=formatPrice(total);
+  document.getElementById("cartTotal").innerText = formatPrice(total);
 }
 
 async function submitOrder(){
   if(submitting) return;
+  const tableNo = document.getElementById("tableNo").value.trim();
+  const orderDate = document.getElementById("orderDate").value;
 
-  const tableNo=document.getElementById("tableNo").value.trim();
-  const orderDate=document.getElementById("orderDate").value;
+  if(!tableNo){ alert(t("enterCustomer")); return; }
+  if(!cart.length){ alert(t("emptyCart")); return; }
 
-  if(!tableNo){
-    alert(t("enterCustomer"));
-    return;
-  }
+  const total = cart.reduce((sum, item) => sum + Number(item.total_price), 0);
+  submitting = true;
 
-  if(!cart.length){
-    alert(t("emptyCart"));
-    return;
-  }
-
-  const total=cart.reduce((sum,item)=>sum+Number(item.total_price),0);
-  submitting=true;
-
-  const button=document.getElementById("submitButton");
-  button.disabled=true;
+  const button = document.getElementById("submitButton");
+  button.disabled = true;
   button.classList.add("opacity-60");
-  document.getElementById("submitText").innerText=t("sending");
+  document.getElementById("submitText").innerText = t("sending");
 
   const formattedCart = cart.map(item => {
     const toppingNames = item.toppings ? item.toppings.map(t => t.name).join(", ") : "";
     const fullName = toppingNames ? `${item.menu_name} (+${toppingNames})` : item.menu_name;
-    
-    return {
-      name: fullName,
-      display_name: fullName,
-      price: item.total_price,
-      cost: item.price
-    };
+    return { name: fullName, display_name: fullName, price: item.total_price, cost: item.price };
   });
 
   try{
-    const response=await fetch("/api/order",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        table_number:tableNo,
-        cart:formattedCart,
-        total_price:total,
-        order_date:orderDate
+    const response = await fetch("/api/order",{
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        table_number: tableNo,
+        cart: formattedCart,
+        total_price: total,
+        order_date: orderDate
       })
     });
 
-    const data=await response.json();
+    const data = await response.json();
+    if(!response.ok || !data.success) throw new Error(data.error || "Order error");
 
-    if(!response.ok || !data.success){
-      throw new Error(data.error || "Order error");
-    }
-
-    resetAllForm();
+    cart = [];
+    document.getElementById("searchInput").value = "";
+    filterMenuFast();
+    updateCartUI();
+    setDefaultDate();
     alert(t("success"));
-
   }catch(error){
     console.error(error);
     alert(t("error") + "\n" + error.message);
   }finally{
-    submitting=false;
-    button.disabled=false;
+    submitting = false;
+    button.disabled = false;
     button.classList.remove("opacity-60");
-    document.getElementById("submitText").innerText=t("confirm");
+    document.getElementById("submitText").innerText = t("confirm");
   }
 }
 
@@ -630,18 +531,11 @@ function formatPrice(price){
 }
 
 function escapeHTML(value){
-  if(value===null || value===undefined) return "";
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  if(!value) return "";
+  return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
-function escapeAttribute(value){
-  return escapeHTML(value);
-}
+function escapeAttribute(value){ return escapeHTML(value); }
 
 setDefaultDate();
 updateLanguageButtons();
