@@ -10,8 +10,25 @@
 html,body{margin:0;padding:0;background:#F4EFEA;font-family:Arial,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{padding:10px;padding-bottom:105px}
 button,input,label{touch-action:manipulation}
-.menu-card{background:#fff;border-radius:14px;border:1.5px solid #C8B2A2;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
-.menu-image{width:100%;height:110px;object-fit:contain;background:#fafafa;border-radius:10px}
+.menu-card{
+  background:#fff;
+  border-radius:14px;
+  border:1.5px solid #C8B2A2;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  will-change:transform;
+  contain:content;
+}
+.menu-image{
+  width:100%;
+  height:110px;
+  aspect-ratio:1 / 1;
+  object-fit:contain;
+  background:#fafafa;
+  border-radius:10px;
+}
 .topping-box{border:1px solid #ddd;border-radius:9px;background:#fafafa;overflow:hidden}
 .topping-list-container{max-height:140px;overflow-y:auto}
 .topping-list-container::-webkit-scrollbar{width:4px}
@@ -48,7 +65,6 @@ button,input,label{touch-action:manipulation}
   </div>
 </div>
 
-<!-- เพิ่มตัวเลือกวันที่สั่งซื้อ -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
   <div>
     <label id="dateLabel" class="block text-xs text-gray-600 mb-1 font-bold">📅 วันที่สั่งซื้อ:</label>
@@ -121,6 +137,7 @@ let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
 
 const translationCache = {};
+const menuCache = new Map();
 
 const itemDictionary = {
   "ไข่มุกสีดำ": { en: "Black Pearl", zh: "黑珍珠", my: "ပုလဲနက်" },
@@ -228,18 +245,32 @@ async function batchTranslateTexts(texts, targetLang) {
 
 function getMenuName(item){
   if(currentLanguage === "th") return item.name;
-  if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
-    return itemDictionary[item.name][currentLanguage];
-  }
-  return translationCache[`${item.name}_${currentLanguage}`] || item[`name_${currentLanguage}`] || item.name;
+  
+  const cacheKey = `${item.name}_${currentLanguage}`;
+  if (menuCache.has(cacheKey)) return menuCache.get(cacheKey);
+
+  const translated = itemDictionary[item.name]?.[currentLanguage] 
+                  || translationCache[`${item.name}_${currentLanguage}`] 
+                  || item[`name_${currentLanguage}`] 
+                  || item.name;
+
+  menuCache.set(cacheKey, translated);
+  return translated;
 }
 
 function getToppingName(item){
   if(currentLanguage === "th") return item.name;
-  if(itemDictionary[item.name] && itemDictionary[item.name][currentLanguage]){
-    return itemDictionary[item.name][currentLanguage];
-  }
-  return translationCache[`${item.name}_${currentLanguage}`] || item[`name_${currentLanguage}`] || item.name;
+
+  const cacheKey = `topping_${item.name}_${currentLanguage}`;
+  if (menuCache.has(cacheKey)) return menuCache.get(cacheKey);
+
+  const translated = itemDictionary[item.name]?.[currentLanguage] 
+                  || translationCache[`${item.name}_${currentLanguage}`] 
+                  || item[`name_${currentLanguage}`] 
+                  || item.name;
+
+  menuCache.set(cacheKey, translated);
+  return translated;
 }
 
 async function changeLanguage(language){
@@ -358,7 +389,7 @@ function renderMenu(){
       <div class="menu-card p-2">
         <div>
           <img src="${escapeAttribute(item.image_url || "https://via.placeholder.com/300")}"
-               class="menu-image" loading="lazy" alt="">
+               class="menu-image" loading="lazy" decoding="async" alt="">
           <div class="mt-2">
             <div id="menu-name-${menuIndex}" class="font-bold text-sm text-gray-800 line-clamp-1">${escapeHTML(getMenuName(item))}</div>
             <div class="text-amber-800 font-extrabold mt-1">${formatPrice(item.price)} ฿</div>
