@@ -11,7 +11,6 @@ html,body{margin:0;padding:0;background:#F4EFEA;font-family:Arial,sans-serif;tou
 body{padding:10px;padding-bottom:105px}
 button,input,label{touch-action:manipulation}
 
-/* เพิ่ม CSS Optimize สำหรับการเรนเดอร์ให้ลื่นไหล */
 .menu-card {
   background:#fff;
   border-radius:14px;
@@ -20,16 +19,20 @@ button,input,label{touch-action:manipulation}
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  contain: content; /* กักบริเวณการเรนเดอร์ไม่ให้กระทบทั้งหน้า */
+  contain: content;
   will-change: transform;
 }
+
+/* ปรับแก้ไขส่วนรูปภาพให้เห็นเต็มรูป ไม่โดนตัดขอบ */
 .menu-image {
   width:100%;
-  height:110px;
-  object-fit:cover;
+  height:160px;
+  object-fit:contain;
   background:#fafafa;
   border-radius:10px 10px 0 0;
+  padding: 4px;
 }
+
 .order-button{min-height:42px}
 .language-button{min-width:62px;min-height:40px}
 .loading{text-align:center;padding:40px 10px;color:#777}
@@ -44,7 +47,7 @@ button,input,label{touch-action:manipulation}
 
 @media (min-width:768px){
   body{padding:16px;padding-bottom:115px}
-  .menu-image{height:140px}
+  .menu-image{height:200px}
 }
 </style>
 </head>
@@ -87,6 +90,10 @@ button,input,label{touch-action:manipulation}
   <div class="loading col-span-full">กำลังโหลดเมนู...</div>
 </div>
 
+<div id="noMenuAlert" class="hidden text-center py-10 text-gray-400 font-bold col-span-full">
+  ไม่พบเมนูที่ค้นหา
+</div>
+
 <!-- Floating Bottom Bar -->
 <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-amber-800 p-3 shadow-lg z-40">
   <div class="max-w-7xl mx-auto flex justify-between items-center gap-3">
@@ -103,7 +110,7 @@ button,input,label{touch-action:manipulation}
   </div>
 </div>
 
-<!-- Modal เลือกท็อปปิ้ง (ช่วยลด DOM บน iPad ได้เยอะมาก) -->
+<!-- Modal เลือกท็อปปิ้ง -->
 <div id="toppingModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
   <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 max-h-[80vh] flex flex-col shadow-2xl">
     <div class="flex justify-between items-center pb-2 border-b">
@@ -153,7 +160,7 @@ let toppingData = [];
 let cart = [];
 let currentLanguage = localStorage.getItem("orderLanguage") || "th";
 let submitting = false;
-let activeMenuIndex = null; // บันทึกเมนูที่กำลังเลือกท็อปปิ้ง
+let activeMenuIndex = null;
 
 const translationCache = {};
 
@@ -296,6 +303,7 @@ function updateStaticTexts(){
   document.getElementById("searchInput").placeholder=t("searchPlaceholder");
   document.getElementById("submitText").innerText=t("confirm");
   document.getElementById("cartModalTitle").innerText=t("cartTitle");
+  document.getElementById("noMenuAlert").innerText=t("noMenuFound");
   updateCartUI();
 }
 
@@ -319,19 +327,27 @@ async function loadInitData(){
   }
 }
 
-// ค้นหาแบบรวดเร็ว ไม่ทำลาย DOM
 function filterMenuFast() {
   const keyword = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
   const cards = document.querySelectorAll('.menu-card');
+  let visibleCount = 0;
   
   cards.forEach(card => {
     const name = card.getAttribute('data-name').toLowerCase();
     if (name.includes(keyword)) {
       card.classList.remove('hidden');
+      visibleCount++;
     } else {
       card.classList.add('hidden');
     }
   });
+
+  const noMenuAlert = document.getElementById("noMenuAlert");
+  if (visibleCount === 0 && cards.length > 0) {
+    noMenuAlert.classList.remove('hidden');
+  } else {
+    noMenuAlert.classList.add('hidden');
+  }
 }
 
 function renderMenu(){
@@ -341,7 +357,6 @@ function renderMenu(){
     return;
   }
 
-  // สร้างเฉพาะการ์ดเมนูเบาๆ ไม่ใส่ Topping DOM ซ้ำๆ
   container.innerHTML = menuData.map((item, index) => {
     const name = getMenuName(item);
     return `
@@ -360,7 +375,6 @@ function renderMenu(){
   }).join("");
 }
 
-// ระบบเลือก ท็อปปิ้ง ผ่าน Modal
 function openToppingModal(index) {
   activeMenuIndex = index;
   const item = menuData[index];
@@ -456,7 +470,7 @@ function renderCartModal(){
           ${toppingsList ? `<div class="text-xs text-amber-700 mt-0.5">+ ${escapeHTML(toppingsList)}</div>` : ''}
           <div class="text-xs font-bold text-amber-900 mt-1">${formatPrice(item.total_price)} ฿</div>
         </div>
-        <button onclick="removeFromCart(${index})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-200">
+        <button onclick="removeFromCart(${index})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-200 active:scale-95 transition">
           🗑️ ${t("remove")}
         </button>
       </div>`;
